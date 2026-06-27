@@ -178,7 +178,7 @@ const Library: React.FC = () => {
         {!isLoading && displayed.length > 0 && (
           <div className={gridClass}>
             {displayed.map((book) => (
-              <BookCard key={book.id} book={book} viewMode={viewMode} />
+              <BookCard key={book.id} book={book} viewMode={viewMode} onClick={() => openBook(book)} />
             ))}
           </div>
         )}

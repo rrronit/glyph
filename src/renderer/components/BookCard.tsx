@@ -4,12 +4,16 @@ import type { Book } from '../../shared/types';
 interface Props {
   book: Book;
   viewMode: 'grid' | 'list';
+  onClick?: () => void;
 }
 
-const BookCard: React.FC<Props> = ({ book, viewMode }) => {
+const BookCard: React.FC<Props> = ({ book, viewMode, onClick }) => {
   if (viewMode === 'list') {
     return (
-      <div className="flex items-center gap-4 px-4 py-3 rounded-lg hover:bg-white/5 cursor-pointer transition-colors border-b border-white/5">
+      <div
+        onClick={onClick}
+        className="flex items-center gap-4 px-4 py-3 rounded-lg hover:bg-white/5 cursor-pointer transition-colors border-b border-white/5"
+      >
         {/* cover thumbnail */}
         <div className="w-10 h-14 rounded bg-white/10 flex-shrink-0 flex items-center justify-center text-xs text-white/30 overflow-hidden">
           {book.coverPath ? (
@@ -35,7 +39,10 @@ const BookCard: React.FC<Props> = ({ book, viewMode }) => {
 
   // Grid card
   return (
-    <div className="group cursor-pointer rounded-xl p-3 pb-4 hover:bg-white/[0.06] transition-colors">
+    <div
+      onClick={onClick}
+      className="group cursor-pointer rounded-xl p-3 pb-4 hover:bg-white/[0.06] transition-colors"
+    >
       {/* cover */}
       <div className="aspect-[3/4] rounded-lg bg-white/[0.06] mb-3 overflow-hidden flex items-center justify-center">
         {book.coverPath ? (
