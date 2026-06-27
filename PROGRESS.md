@@ -12,58 +12,30 @@
 | 1 | Main process — SQLite database service, file watcher, IPC handlers | ✅ done |
 | 2 | Library UI — grid/list views, book card, Zustand store | ✅ done |
 | 3 | PDF reader core — pdf.js rendering, page navigation, zoom, fit modes | ✅ done |
-| 4 | Reader UI — controls, sidebar shell, keyboard shortcuts | 🔄 running |
-| 5 | Search — FlexSearch indexing, full-text search, search UI | 🔄 running |
-| 6 | Bookmarks — create/list/delete, bookmark sidebar, persistence | ⬜ planned |
-| 7 | Reading progress — save/restore position, recently opened, continue reading | ⬜ planned |
-| 8 | Polish — window restoration, empty states, loading skeletons, final verification | ⬜ planned |
-
-## Module Status
-
-| Module | Batch | Status | Self-check | Notes |
-|--------|-------|--------|------------|-------|
-| Project scaffold | 0 | ✅ done | — | TS strict, Vite+Tailwind v4, Electron shell, ESLint flat config |
-| SQLite DB service | 1 | ✅ done | ✅ | WAL, FK, 7 tables, domain functions |
-| File watcher | 1 | ✅ done | ✅ | chokidar, recursive scan, Book creation |
-| Book metadata service | 1 | ✅ done | ✅ | pdf.js extract, sharp covers |
-| IPC handlers | 1 | ✅ done | ✅ | 12 handlers (incl. readFile) |
-| Library store | 2 | ✅ done | ✅ | Zustand, search/filter/sort |
-| Book card component | 2 | ✅ done | — | grid + list modes |
-| Library UI page | 2 | ✅ done | — | search bar, view toggle, sort, skeletons |
-| PDF engine (pdf.js) | 3 | ✅ done | — | load, render, text extract, readFile IPC |
-| Reader store | 3 | ✅ done | ✅ | page nav, scale, fit modes |
-| PDFViewer component | 3 | ✅ done | — | loading/error/ready states |
-| Reader controls | 4 | planned | — | — |
-| Reader sidebar | 4 | planned | — | — |
-| Keyboard shortcuts | 4 | planned | — | — |
-| FlexSearch index | 5 | planned | — | — |
-| Search UI | 5 | planned | — | — |
-| Bookmark CRUD | 6 | planned | — | — |
-| Bookmark sidebar | 6 | planned | — | — |
-| Progress persistence | 7 | planned | — | — |
-| Continue reading | 7 | planned | — | — |
-| Window restoration | 8 | planned | — | — |
-| Empty states | 8 | planned | — | — |
-| Loading skeletons | 8 | planned | — | — |
-
-## Blockers
-
-None.
+| 4 | Reader UI — controls, sidebar shell, keyboard shortcuts | ✅ done |
+| 5 | Search — FlexSearch indexing, full-text search, search UI | ✅ done |
+| 6 | Bookmarks — create/list/delete, bookmark sidebar, persistence | 🔄 running |
+| 7 | Reading progress — save/restore position, recently opened, continue reading | 🔄 running |
+| 8 | Polish — window restoration, routing, final verification | ⬜ planned |
 
 ## Verification Results
 
 | Date | Batch | Typecheck | Build | Lint | Notes |
 |------|-------|-----------|-------|------|-------|
-| 2026-06-27 | 0 | ✅ pass | ✅ pass | ✅ pass | Scaffold complete |
-| 2026-06-27 | 1 | ✅ pass | ✅ pass | ✅ pass | DB, watcher, metadata, IPC integrated |
-| 2026-06-27 | 2 | ✅ pass | ✅ pass | ✅ pass | Library store + UI |
-| 2026-06-27 | 3 | ✅ pass | ✅ pass | ✅ pass | pdfEngine + reader store + PDFViewer |
+| 2026-06-27 | 0 | ✅ | ✅ | ✅ | Scaffold |
+| 2026-06-27 | 1 | ✅ | ✅ | ✅ | DB, watcher, metadata, IPC |
+| 2026-06-27 | 2 | ✅ | ✅ | ✅ | Library store + UI |
+| 2026-06-27 | 3 | ✅ | ✅ | ✅ | pdfEngine, reader store, PDFViewer |
+| 2026-06-27 | 4 | ✅ | ✅ | ✅ | ReaderControls, ReaderSidebar, useKeyboard, Reader page |
+| 2026-06-27 | 5 | ✅ | ✅ | ✅ | FlexSearch index, SearchBar, IPC update |
 
 ## Changelog
 
 | Date | Batch | Summary |
 |------|-------|---------|
 | 2026-06-27 | 0 | Scaffold: Electron+React+TS+Tailwind v4+Vite |
-| 2026-06-27 | 1 | Main process: DB (7 tables), watcher, metadata (pdf.js+sharp), IPC (12 handlers) |
-| 2026-06-27 | 2 | Library: Zustand store, BookCard (grid/list), Library page (search/sort/view toggle) |
-| 2026-06-27 | 3 | Reader: pdfEngine (load/render/text), reader store (page nav/scale/fit), PDFViewer component |
+| 2026-06-27 | 1 | Main process: DB, watcher, metadata, IPC |
+| 2026-06-27 | 2 | Library: store, BookCard, Library page |
+| 2026-06-27 | 3 | Reader: pdfEngine, reader store, PDFViewer |
+| 2026-06-27 | 4 | Reader UI: controls bar (auto-hide), sidebar (4 tabs), keyboard shortcuts, Reader page |
+| 2026-06-27 | 5 | Search: FlexSearch indexing, SearchBar (Ctrl+F overlay, debounced, results with snippets) |

@@ -75,9 +75,9 @@ export const useReaderStore = create<ReaderState>((set, get) => ({
 
 // ── Self-check ────────────────────────────────────────────────────────────
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const _argv1 = (globalThis as any).process?.argv?.[1];
+const _argv1: string | undefined = (globalThis as any).process?.argv?.[1];
 if (_argv1?.endsWith('/reader.ts') || _argv1?.endsWith('\\reader.ts')) {
-  // ponytail: mock window.glyphAPI for self-check
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (globalThis as any).window = {
     glyphAPI: {
       getProgress: async () => null,

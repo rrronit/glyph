@@ -18,7 +18,6 @@ interface Props {
 
 const ReaderSidebar: React.FC<Props> = ({ isOpen, onClose }) => {
   const [activeTab, setActiveTab] = useState<TabId>('outline');
-  const [labelPrompt, setLabelPrompt] = useState(false);
 
   const currentBook = useReaderStore((s) => s.currentBook);
   const currentPage = useReaderStore((s) => s.currentPage);
@@ -38,7 +37,6 @@ const ReaderSidebar: React.FC<Props> = ({ isOpen, onClose }) => {
     if (!currentBook) return;
     const label = prompt('Bookmark label (optional):');
     await addBookmark(currentBook.id, currentPage, label || undefined);
-    setLabelPrompt(false);
   };
 
   return (

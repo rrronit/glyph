@@ -2,7 +2,6 @@ import React, { useEffect, useMemo } from 'react';
 import { useLibraryStore, type SortBy } from '../stores/library';
 import { useReaderStore } from '../stores/reader';
 import BookCard from '../components/BookCard';
-import type { Book } from '../../shared/types';
 
 const Library: React.FC = () => {
   const {

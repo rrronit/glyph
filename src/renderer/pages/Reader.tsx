@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PDFViewer from '../components/PDFViewer';
 import ReaderControls from '../components/ReaderControls';
 import ReaderSidebar from '../components/ReaderSidebar';
 import { useKeyboard } from '../hooks/useKeyboard';
 import { useReaderStore } from '../stores/reader';
+import { useBookmarkStore } from '../stores/bookmarks';
 import type { Book } from '../../shared/types';
 
 interface Props {
@@ -15,7 +16,14 @@ const Reader: React.FC<Props> = ({ book, onClose }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [controlsVisible, setControlsVisible] = useState(true);
 
-  const { nextPage, prevPage, setScale, scale } = useReaderStore();
+  const { nextPage, prevPage, setScale, scale, openBook, closeBook, currentBook, currentPage } = useReaderStore();
+  const addBookmark = useBookmarkStore((s) => s.addBookmark);
+
+  // Sync book to store on mount / unmount
+  useEffect(() => {
+    openBook(book);
+    return () => { closeBook(); };
+  }, []);
 
   useKeyboard({
     ' ': () => {
@@ -47,6 +55,12 @@ const Reader: React.FC<Props> = ({ book, onClose }) => {
     '-': () => {
       setScale(Math.max(0.5, scale - 0.25));
       setControlsVisible(true);
+    },
+    'Ctrl+B': () => {
+      if (currentBook) {
+        const label = prompt('Bookmark label (optional):');
+        addBookmark(currentBook.id, currentPage, label || undefined);
+      }
     },
   });
 
