@@ -4,15 +4,13 @@
 
 **Goal**: A working Electron + React + TypeScript PDF book reader with library, single-page reader, search, bookmarks, and reading progress.
 
-**Target**: Builds, typechecks, opens a PDF without crashing. Library, reader, search, and bookmark features all functional.
-
 ## Batch Queue
 
 | # | Batch | Status |
 |---|-------|--------|
 | 0 | Scaffold — project init, configs, shell app | ✅ done |
-| 1 | Main process — SQLite database service, file watcher, IPC handlers | ⬜ planned |
-| 2 | Library UI — grid/list views, book card, Zustand store | ⬜ planned |
+| 1 | Main process — SQLite database service, file watcher, IPC handlers | ✅ done |
+| 2 | Library UI — grid/list views, book card, Zustand store | 🔄 running |
 | 3 | PDF reader core — pdf.js rendering, page navigation, zoom, fit modes | ⬜ planned |
 | 4 | Reader UI — controls, sidebar shell, keyboard shortcuts | ⬜ planned |
 | 5 | Search — FlexSearch indexing, full-text search, search UI | ⬜ planned |
@@ -25,13 +23,13 @@
 | Module | Batch | Status | Self-check | Notes |
 |--------|-------|--------|------------|-------|
 | Project scaffold | 0 | ✅ done | — | TS strict, Vite+Tailwind v4, Electron shell, ESLint flat config |
-| SQLite DB service | 1 | planned | — | — |
-| File watcher | 1 | planned | — | — |
-| IPC handlers | 1 | planned | — | — |
-| Book metadata service | 1 | planned | — | — |
-| Library store | 2 | planned | — | — |
-| Library UI (grid/list) | 2 | planned | — | — |
-| Book card component | 2 | planned | — | — |
+| SQLite DB service | 1 | ✅ done | ✅ | WAL, FK, 7 tables, domain functions |
+| File watcher | 1 | ✅ done | ✅ | chokidar, recursive scan, Book creation |
+| Book metadata service | 1 | ✅ done | ✅ | pdf.js extract, sharp covers (stubbed render) |
+| IPC handlers | 1 | ✅ done | ✅ | 11 handlers, dynamic electron import |
+| Library store | 2 | 🔄 running | — | — |
+| Book card component | 2 | 🔄 running | — | — |
+| Library UI page | 2 | 🔄 running | — | — |
 | PDF engine (pdf.js) | 3 | planned | — | — |
 | Page renderer | 3 | planned | — | — |
 | Zoom/fit controls | 3 | planned | — | — |
@@ -56,10 +54,12 @@ None.
 
 | Date | Batch | Typecheck | Build | Lint | Notes |
 |------|-------|-----------|-------|------|-------|
-| 2026-06-27 | 0 | ✅ pass | ✅ pass (16 modules, 57ms) | ✅ pass | Scaffold complete |
+| 2026-06-27 | 0 | ✅ pass | ✅ pass | ✅ pass | Scaffold complete |
+| 2026-06-27 | 1 | ✅ pass | ✅ pass | ✅ pass | DB, watcher, metadata, IPC integrated |
 
 ## Changelog
 
 | Date | Batch | Summary |
 |------|-------|---------|
-| 2026-06-27 | 0 | Scaffold: Electron+React+TS+Tailwind v4+Vite. 2 tsconfigs, preload with IPC API shell, shared types, PRD.md, ESLint flat config. Build+typecheck+lint all green. |
+| 2026-06-27 | 0 | Scaffold: Electron+React+TS+Tailwind v4+Vite. 2 tsconfigs, preload, shared types, ESLint. |
+| 2026-06-27 | 1 | Main process: DB (7 tables, WAL, domain fns), watcher (chokidar + recursive scan), metadata (pdf.js + sharp), IPC (11 handlers). All self-checks pass. |
