@@ -1,6 +1,6 @@
 # Glyph — Progress
 
-## Phase 1: MVP
+## Phase 1: MVP — COMPLETE ✅
 
 **Goal**: A working Electron + React + TypeScript PDF book reader with library, single-page reader, search, bookmarks, and reading progress.
 
@@ -16,34 +16,43 @@
 | 5 | Search — FlexSearch indexing, full-text search, search UI | ✅ done |
 | 6 | Bookmarks — create/list/delete, bookmark sidebar, persistence | ✅ done |
 | 7 | Reading progress — save/restore position, recently opened, continue reading | ✅ done |
-| 8 | Polish — window restoration, integration fixes, final verification | ✅ done |
-
-**Phase 1 complete.** All batches done. Typecheck, build, lint green. 7 self-checks pass.
+| 8 | Polish — window restoration, routing, final verification | ✅ done |
 
 ## Verification Results
 
-| Date | Batch | Typecheck | Build | Lint | Notes |
-|------|-------|-----------|-------|------|-------|
-| 2026-06-27 | 0 | ✅ | ✅ | ✅ | Scaffold |
-| 2026-06-27 | 1 | ✅ | ✅ | ✅ | DB, watcher, metadata, IPC |
-| 2026-06-27 | 2 | ✅ | ✅ | ✅ | Library store + UI |
-| 2026-06-27 | 3 | ✅ | ✅ | ✅ | pdfEngine, reader store, PDFViewer |
-| 2026-06-27 | 4 | ✅ | ✅ | ✅ | ReaderControls, ReaderSidebar, useKeyboard, Reader page |
-| 2026-06-27 | 5 | ✅ | ✅ | ✅ | FlexSearch index, SearchBar, IPC update |
-| 2026-06-27 | 6 | ✅ | ✅ | ✅ | Bookmark store, ReaderSidebar bookmarks tab |
-| 2026-06-27 | 7 | ✅ | ✅ | ✅ | Progress save/restore, continue reading, App routing |
-| 2026-06-27 | 8 | ✅ | ✅ | ✅ | Window state, BookCard onClick, SearchBar bookId, Ctrl+B, SearchBar in Reader |
+| Date | Batch | Typecheck | Build | Lint | Self-checks |
+|------|-------|-----------|-------|------|-------------|
+| 2026-06-27 | 0 | ✅ | ✅ | ✅ | — |
+| 2026-06-27 | 1 | ✅ | ✅ | ✅ | 4/4 |
+| 2026-06-27 | 2 | ✅ | ✅ | ✅ | 1/1 |
+| 2026-06-27 | 3 | ✅ | ✅ | ✅ | 1/1 |
+| 2026-06-27 | 4 | ✅ | ✅ | ✅ | — |
+| 2026-06-27 | 5 | ✅ | ✅ | ✅ | 1/1 |
+| 2026-06-27 | 6 | ✅ | ✅ | ✅ | — |
+| 2026-06-27 | 7 | ✅ | ✅ | ✅ | 1/1 |
+| 2026-06-27 | 8 | ✅ | ✅ | ✅ | 6/6 |
+
+**Final**: 34 Vite modules, build 119ms, 0 lint errors, 6/6 self-checks pass.
+
+## Known Caveats
+
+- pdf.worker chunk is 1.2MB (expected for pdf.js)
+- Cover images are SVG placeholders until `canvas` package installed
+- `reader:getPageText` IPC is stubbed
+- Search reindexes on first query per session (no auto-reindex on page nav)
+- No drag-and-drop import yet
+- No collection/smart-collection UI yet
 
 ## Changelog
 
 | Date | Batch | Summary |
 |------|-------|---------|
 | 2026-06-27 | 0 | Scaffold: Electron+React+TS+Tailwind v4+Vite |
-| 2026-06-27 | 1 | Main process: DB, watcher, metadata, IPC |
-| 2026-06-27 | 2 | Library: store, BookCard, Library page |
-| 2026-06-27 | 3 | Reader: pdfEngine, reader store, PDFViewer |
+| 2026-06-27 | 1 | Main process: DB (7 tables), watcher, metadata (pdf.js+sharp), IPC (12 handlers) |
+| 2026-06-27 | 2 | Library: Zustand store, BookCard (grid/list), Library page (search/sort/view toggle) |
+| 2026-06-27 | 3 | Reader: pdfEngine (load/render/text), reader store (page nav/scale/fit), PDFViewer |
 | 2026-06-27 | 4 | Reader UI: controls bar (auto-hide), sidebar (4 tabs), keyboard shortcuts, Reader page |
-| 2026-06-27 | 5 | Search: FlexSearch indexing, SearchBar (Ctrl+F overlay, debounced, results with snippets) |
-| 2026-06-27 | 6 | Bookmarks: create/list/delete, sidebar tab, Ctrl+B shortcut |
-| 2026-06-27 | 7 | Reading progress: openBook/closeBook save/restore, Continue Reading hero card, App routing Library↔Reader |
-| 2026-06-27 | 8 | Polish: window state save/restore, BookCard onClick → openBook, SearchBar uses real bookId, Ctrl+B in useKeyboard, SearchBar integrated in Reader page |
+| 2026-06-27 | 5 | Search: FlexSearch indexing, SearchBar (Ctrl+F overlay, debounced, results) |
+| 2026-06-27 | 6 | Bookmarks: Zustand store, sidebar tab, Ctrl+B shortcut, Info tab |
+| 2026-06-27 | 7 | Progress: openBook/closeBook save/restore, Continue Reading card, App routing |
+| 2026-06-27 | 8 | Polish: window state restore, BookCard onClick, SearchBar integration, Ctrl+key support |
