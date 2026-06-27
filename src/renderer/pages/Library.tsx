@@ -1,15 +1,26 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useLibraryStore, type SortBy } from '../stores/library';
+import { useReaderStore } from '../stores/reader';
 import BookCard from '../components/BookCard';
+import type { Book } from '../../shared/types';
 
 const Library: React.FC = () => {
   const {
-    books, isLoading, searchQuery, viewMode, sortBy, sortDirection, error,
-    loadLibrary, setSearchQuery, setViewMode, setSortBy, toggleSortDirection,
+    books, recentBooks, isLoading, searchQuery, viewMode, sortBy, sortDirection, error,
+    loadLibrary, loadRecentBooks, setSearchQuery, setViewMode, setSortBy, toggleSortDirection,
     filteredBooks,
   } = useLibraryStore();
+  const openBook = useReaderStore((s) => s.openBook);
 
-  useEffect(() => { loadLibrary(); }, [loadLibrary]);
+  useEffect(() => { loadLibrary(); loadRecentBooks(); }, [loadLibrary, loadRecentBooks]);
+
+  // Map recentBooks to actual Book objects for cover/title display
+  const continueReading = useMemo(() => {
+    const bookMap = new Map(books.map((b) => [b.id, b]));
+    return recentBooks
+      .filter((r) => bookMap.has(r.bookId))
+      .map((r) => ({ progress: r, book: bookMap.get(r.bookId)! }));
+  }, [books, recentBooks]);
 
   const displayed = filteredBooks();
 
@@ -98,7 +109,46 @@ const Library: React.FC = () => {
 
       {/* Content */}
       <main className="flex-1 overflow-y-auto px-6 py-4">
-        {/* Loading */}
+              {/* Continue Reading */}
+        {continueReading.length > 0 && (
+          <div className="mb-6">
+            <h2 className="text-sm font-medium text-white/40 mb-3 ml-1">Continue Reading</h2>
+            <div
+              className="group cursor-pointer rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.05] hover:border-white/[0.1] transition-all p-4 flex items-center gap-4"
+              onClick={() => {
+                const item = continueReading[0];
+                openBook(item.book);
+              }}
+            >
+              {/* Cover */}
+              <div className="w-14 h-20 rounded-lg bg-white/[0.06] flex-shrink-0 overflow-hidden flex items-center justify-center">
+                {continueReading[0].book.coverPath ? (
+                  <img src={continueReading[0].book.coverPath} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-white/20 text-lg font-serif">{continueReading[0].book.title.slice(0, 1)}</span>
+                )}
+              </div>
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{continueReading[0].book.title}</p>
+                <p className="text-xs text-white/40 mt-0.5">
+                  Page {continueReading[0].progress.currentPage} of {continueReading[0].progress.totalPages}
+                </p>
+                {/* Mini progress bar */}
+                <div className="mt-1.5 h-1 rounded-full bg-white/[0.06] overflow-hidden">
+                  <div
+                    className="h-full bg-white/20 rounded-full transition-all"
+                    style={{ width: `${continueReading[0].progress.completionPercent}%` }}
+                  />
+                </div>
+              </div>
+              {/* Arrow */}
+              <svg className="w-4 h-4 text-white/20 group-hover:text-white/40 transition-colors flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="m9 18 6-6-6-6" />
+              </svg>
+            </div>
+          </div>
+        )}
         {isLoading && (
           <div className={gridClass}>
             {Array.from({ length: 8 }).map((_, i) => (
