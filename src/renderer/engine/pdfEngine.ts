@@ -22,7 +22,7 @@ export async function renderPage(
   pageNum: number,
   canvas: HTMLCanvasElement,
   scale: number,
-): Promise<void> {
+): Promise<pdfjs.PageViewport> {
   const page = await doc.getPage(pageNum);
   const viewport = page.getViewport({ scale });
   canvas.width = Math.floor(viewport.width);
@@ -30,6 +30,7 @@ export async function renderPage(
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Failed to get 2d context');
   await page.render({ canvasContext: ctx, canvas, viewport }).promise;
+  return viewport;
 }
 
 /**

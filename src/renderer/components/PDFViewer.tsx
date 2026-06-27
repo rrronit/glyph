@@ -94,10 +94,17 @@ const PDFViewer: React.FC<Props> = ({ filePath, onReady, onError }) => {
 
   return (
     <div className="flex items-center justify-center h-full bg-[#1a1a2e] overflow-auto">
-      <canvas
-        ref={canvasRef}
-        className="shadow-2xl"
-      />
+      <div className="relative shadow-2xl" style={{ width: canvasRef.current?.width, height: canvasRef.current?.height }}>
+        <canvas ref={canvasRef} className="block" />
+        <div
+          ref={textLayerRef}
+          className="pdf-text-layer"
+          style={{
+            width: canvasRef.current?.width,
+            height: canvasRef.current?.height,
+          }}
+        />
+      </div>
     </div>
   );
 };

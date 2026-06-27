@@ -28,6 +28,30 @@ body {
   width: 100vw;
 }
 
+/* PDF text selection layer */
+.pdf-text-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  line-height: 1.0;
+  user-select: text;
+  pointer-events: auto;
+}
+.pdf-text-layer ::selection {
+  background: rgba(0, 130, 255, 0.5);
+  color: transparent;
+}
+.pdf-text-layer .pdf-text-span {
+  color: transparent;
+  position: absolute;
+  white-space: pre;
+  cursor: text;
+  transform-origin: 0% 0%;
+}
+
 /* Smooth scrolling for library */
 .smooth-scroll {
   scroll-behavior: smooth;
