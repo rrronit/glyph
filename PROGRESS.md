@@ -10,8 +10,8 @@
 |---|-------|--------|
 | 0 | Scaffold — project init, configs, shell app | ✅ done |
 | 1 | Main process — SQLite database service, file watcher, IPC handlers | ✅ done |
-| 2 | Library UI — grid/list views, book card, Zustand store | 🔄 running |
-| 3 | PDF reader core — pdf.js rendering, page navigation, zoom, fit modes | ⬜ planned |
+| 2 | Library UI — grid/list views, book card, Zustand store | ✅ done |
+| 3 | PDF reader core — pdf.js rendering, page navigation, zoom, fit modes | ✅ done |
 | 4 | Reader UI — controls, sidebar shell, keyboard shortcuts | ⬜ planned |
 | 5 | Search — FlexSearch indexing, full-text search, search UI | ⬜ planned |
 | 6 | Bookmarks — create/list/delete, bookmark sidebar, persistence | ⬜ planned |
@@ -25,14 +25,14 @@
 | Project scaffold | 0 | ✅ done | — | TS strict, Vite+Tailwind v4, Electron shell, ESLint flat config |
 | SQLite DB service | 1 | ✅ done | ✅ | WAL, FK, 7 tables, domain functions |
 | File watcher | 1 | ✅ done | ✅ | chokidar, recursive scan, Book creation |
-| Book metadata service | 1 | ✅ done | ✅ | pdf.js extract, sharp covers (stubbed render) |
-| IPC handlers | 1 | ✅ done | ✅ | 11 handlers, dynamic electron import |
-| Library store | 2 | 🔄 running | — | — |
-| Book card component | 2 | 🔄 running | — | — |
-| Library UI page | 2 | 🔄 running | — | — |
-| PDF engine (pdf.js) | 3 | planned | — | — |
-| Page renderer | 3 | planned | — | — |
-| Zoom/fit controls | 3 | planned | — | — |
+| Book metadata service | 1 | ✅ done | ✅ | pdf.js extract, sharp covers |
+| IPC handlers | 1 | ✅ done | ✅ | 12 handlers (incl. readFile) |
+| Library store | 2 | ✅ done | ✅ | Zustand, search/filter/sort |
+| Book card component | 2 | ✅ done | — | grid + list modes |
+| Library UI page | 2 | ✅ done | — | search bar, view toggle, sort, skeletons |
+| PDF engine (pdf.js) | 3 | ✅ done | — | load, render, text extract, readFile IPC |
+| Reader store | 3 | ✅ done | ✅ | page nav, scale, fit modes |
+| PDFViewer component | 3 | ✅ done | — | loading/error/ready states |
 | Reader controls | 4 | planned | — | — |
 | Reader sidebar | 4 | planned | — | — |
 | Keyboard shortcuts | 4 | planned | — | — |
@@ -56,10 +56,14 @@ None.
 |------|-------|-----------|-------|------|-------|
 | 2026-06-27 | 0 | ✅ pass | ✅ pass | ✅ pass | Scaffold complete |
 | 2026-06-27 | 1 | ✅ pass | ✅ pass | ✅ pass | DB, watcher, metadata, IPC integrated |
+| 2026-06-27 | 2 | ✅ pass | ✅ pass | ✅ pass | Library store + UI |
+| 2026-06-27 | 3 | ✅ pass | ✅ pass | ✅ pass | pdfEngine + reader store + PDFViewer |
 
 ## Changelog
 
 | Date | Batch | Summary |
 |------|-------|---------|
-| 2026-06-27 | 0 | Scaffold: Electron+React+TS+Tailwind v4+Vite. 2 tsconfigs, preload, shared types, ESLint. |
-| 2026-06-27 | 1 | Main process: DB (7 tables, WAL, domain fns), watcher (chokidar + recursive scan), metadata (pdf.js + sharp), IPC (11 handlers). All self-checks pass. |
+| 2026-06-27 | 0 | Scaffold: Electron+React+TS+Tailwind v4+Vite |
+| 2026-06-27 | 1 | Main process: DB (7 tables), watcher, metadata (pdf.js+sharp), IPC (12 handlers) |
+| 2026-06-27 | 2 | Library: Zustand store, BookCard (grid/list), Library page (search/sort/view toggle) |
+| 2026-06-27 | 3 | Reader: pdfEngine (load/render/text), reader store (page nav/scale/fit), PDFViewer component |
