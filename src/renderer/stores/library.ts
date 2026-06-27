@@ -1,11 +1,12 @@
 import { create } from 'zustand';
-import type { Book } from '../../shared/types';
+import type { Book, ReadingProgress } from '../../shared/types';
 
 export type ViewMode = 'grid' | 'list';
 export type SortBy = 'title' | 'author' | 'added' | 'lastOpened';
 
 interface LibraryState {
   books: Book[];
+  recentBooks: ReadingProgress[];
   isLoading: boolean;
   viewMode: ViewMode;
   sortBy: SortBy;
@@ -15,6 +16,7 @@ interface LibraryState {
   error: string | null;
 
   loadLibrary: () => Promise<void>;
+  loadRecentBooks: () => Promise<void>;
   scanFolder: (dir: string) => Promise<void>;
   setViewMode: (mode: ViewMode) => void;
   setSortBy: (sort: SortBy) => void;
@@ -33,6 +35,7 @@ const sortFns: Record<SortBy, (a: Book, b: Book) => number> = {
 
 export const useLibraryStore = create<LibraryState>((set, get) => ({
   books: [],
+  recentBooks: [],
   isLoading: false,
   viewMode: 'grid',
   sortBy: 'added',
@@ -49,6 +52,13 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     } catch (e) {
       set({ error: (e as Error).message, isLoading: false });
     }
+  },
+
+  loadRecentBooks: async () => {
+    try {
+      const recent = await window.glyphAPI.getRecentBooks();
+      set({ recentBooks: recent });
+    } catch { /* keep old state */ }
   },
 
   scanFolder: async (dir: string) => {
@@ -92,11 +102,10 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const _argv1 = (globalThis as any).process?.argv?.[1];
 if (_argv1?.endsWith('/library.ts') || _argv1?.endsWith('\\library.ts')) {
-  // ponytail: mock window.glyphAPI for self-check
   const store = useLibraryStore;
 
-  // Initial state
   console.assert(store.getState().books.length === 0, 'starts empty');
+  console.assert(store.getState().recentBooks.length === 0, 'recentBooks starts empty');
   console.assert(store.getState().viewMode === 'grid', 'default grid view');
 
   // setSearchQuery
