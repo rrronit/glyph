@@ -86,6 +86,7 @@ export interface GlyphAPI {
   saveProgress: (bookId: string, page: number, totalPages: number) => Promise<void>;
   getProgress: (bookId: string) => Promise<ReadingProgress | null>;
   getRecentBooks: () => Promise<ReadingProgress[]>;
+  openFolder: () => Promise<string | null>;
 }
 
 declare global {

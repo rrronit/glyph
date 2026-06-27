@@ -105,6 +105,16 @@ export async function registerHandlers(): Promise<void> {
     const dd = await db.getDb();
     return db.getRecentBooks(dd, 10);
   });
+
+  // ── Dialog ──────────────────────────────────────────────
+  ipcMain.handle('dialog:openFolder', async () => {
+    const { dialog, BrowserWindow } = await import('electron');
+    const result = await dialog.showOpenDialog(BrowserWindow.getFocusedWindow()!, {
+      properties: ['openDirectory'],
+      title: 'Select a folder with PDFs',
+    });
+    return result.canceled ? null : result.filePaths[0];
+  });
 }
 
 // ── Self-check ────────────────────────────────────────────────

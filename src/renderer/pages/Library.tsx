@@ -7,7 +7,7 @@ const Library: React.FC = () => {
   const {
     books, recentBooks, isLoading, searchQuery, viewMode, sortBy, sortDirection, error,
     loadLibrary, loadRecentBooks, setSearchQuery, setViewMode, setSortBy, toggleSortDirection,
-    filteredBooks,
+    filteredBooks, scanFolder,
   } = useLibraryStore();
   const openBook = useReaderStore((s) => s.openBook);
 
@@ -48,7 +48,21 @@ const Library: React.FC = () => {
           />
         </div>
 
-        {/* View toggles */}
+        {/* Scan folder */}
+        <button
+          onClick={async () => {
+            const dir = await window.glyphAPI.openFolder();
+            if (dir) scanFolder(dir);
+          }}
+          className="px-3 py-2 rounded-lg bg-white/[0.08] hover:bg-white/[0.14] text-white/60 hover:text-white/90 text-sm transition-colors flex items-center gap-2"
+        >
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+            <line x1="12" y1="11" x2="12" y2="17"/>
+            <line x1="9" y1="14" x2="15" y2="14"/>
+          </svg>
+          Scan Folder
+        </button>
         <div className="flex rounded-lg bg-white/[0.05] p-0.5">
           <button
             onClick={() => setViewMode('grid')}

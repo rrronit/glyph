@@ -22,4 +22,6 @@ contextBridge.exposeInMainWorld('glyphAPI', {
     ipcRenderer.invoke('progress:save', bookId, page, totalPages),
   getProgress: (bookId: string) => ipcRenderer.invoke('progress:get', bookId),
   getRecentBooks: () => ipcRenderer.invoke('progress:getRecent'),
+  // Dialog
+  openFolder: () => ipcRenderer.invoke('dialog:openFolder'),
 });
