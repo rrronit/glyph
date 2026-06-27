@@ -22,8 +22,9 @@ const Reader: React.FC<Props> = ({ book, onClose }) => {
 
   // Sync book to store on mount / unmount
   useEffect(() => {
+    console.log('[Reader] mount, opening book:', book.path);
     openBook(book);
-    return () => { closeBook(); };
+    return () => { console.log('[Reader] unmount'); closeBook(); };
   }, []);
 
   useKeyboard({

@@ -29,6 +29,7 @@ export const useReaderStore = create<ReaderState>((set, get) => ({
   fitMode: 'auto',
 
   openBook: async (book: Book) => {
+    console.log('[reader] openBook called:', book.path);
     set({ currentBook: book, currentPage: 1, totalPages: 0 });
     try {
       const prog = await window.glyphAPI.getProgress(book.id);
@@ -44,6 +45,7 @@ export const useReaderStore = create<ReaderState>((set, get) => ({
   },
 
   closeBook: async () => {
+    console.log('[reader] closeBook called');
     const { currentBook, currentPage, totalPages } = get();
     if (currentBook) {
       try {
