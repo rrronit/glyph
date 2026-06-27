@@ -13,13 +13,18 @@ export async function registerHandlers(): Promise<void> {
     const dd = await db.getDb();
     const books: Book[] = [];
     for (const filePath of pdfPaths) {
-      const meta = await metadata.extractMetadata(filePath);
-      const book = db.upsertBook(dd, {
-        id: '', path: filePath, title: meta.title || '', author: meta.author,
-        publisher: meta.publisher, pages: meta.pages, fileSize: meta.fileSize,
-        addedAt: new Date().toISOString(), tags: [],
-      });
-      books.push(book);
+      try {
+        const meta = await metadata.extractMetadata(filePath);
+        const book = db.upsertBook(dd, {
+          id: '', path: filePath, title: meta.title || '', author: meta.author,
+          publisher: meta.publisher, pages: meta.pages, fileSize: meta.fileSize,
+          addedAt: new Date().toISOString(), tags: [],
+        });
+        books.push(book);
+      } catch {
+        // ponytail: skip corrupted/unreadable PDFs
+        console.warn(`Skipping unreadable PDF: ${filePath}`);
+      }
     }
     return books;
   });
@@ -31,13 +36,17 @@ export async function registerHandlers(): Promise<void> {
 
   // ── Reader ───────────────────────────────────────────────
   ipcMain.handle('reader:open', async (_event, filePath: string): Promise<Book> => {
-    const meta = await metadata.extractMetadata(filePath);
-    const dd = await db.getDb();
-    return db.upsertBook(dd, {
-      id: '', path: filePath, title: meta.title || '', author: meta.author,
-      publisher: meta.publisher, pages: meta.pages, fileSize: meta.fileSize,
-      addedAt: new Date().toISOString(), tags: [],
-    });
+    try {
+      const meta = await metadata.extractMetadata(filePath);
+      const dd = await db.getDb();
+      return db.upsertBook(dd, {
+        id: '', path: filePath, title: meta.title || '', author: meta.author,
+        publisher: meta.publisher, pages: meta.pages, fileSize: meta.fileSize,
+        addedAt: new Date().toISOString(), tags: [],
+      });
+    } catch (err) {
+      throw new Error(`Cannot open file: ${(err as Error).message}`);
+    }
   });
 
   ipcMain.handle('reader:readFile', async (_event, filePath: string): Promise<ArrayBuffer> => {
