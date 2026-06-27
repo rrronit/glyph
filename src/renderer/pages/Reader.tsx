@@ -16,28 +16,29 @@ interface Props {
 const Reader: React.FC<Props> = ({ book, onClose }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [controlsVisible, setControlsVisible] = useState(true);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const { nextPage, prevPage, setScale, scale, openBook, closeBook, currentBook, currentPage } = useReaderStore();
   const addBookmark = useBookmarkStore((s) => s.addBookmark);
 
   // Sync book to store on mount / unmount
   useEffect(() => {
-    console.log('[Reader] mount, opening book:', book.path);
     openBook(book);
-    return () => { console.log('[Reader] unmount'); closeBook(); };
+    return () => { closeBook(); };
   }, []);
 
   useKeyboard({
     ' ': () => {
       nextPage();
-      // auto-hide controls
       setControlsVisible(false);
     },
     ArrowRight: nextPage,
     'Shift+Space': prevPage,
     ArrowLeft: prevPage,
     Escape: () => {
-      if (sidebarOpen) {
+      if (searchOpen) {
+        setSearchOpen(false);
+      } else if (sidebarOpen) {
         setSidebarOpen(false);
       } else {
         onClose?.();
@@ -50,6 +51,9 @@ const Reader: React.FC<Props> = ({ book, onClose }) => {
         document.documentElement.requestFullscreen();
       }
     },
+    'Ctrl+f': () => {
+      setSearchOpen(true);
+    },
     '+': () => {
       setScale(Math.min(4, scale + 0.25));
       setControlsVisible(true);
@@ -58,7 +62,7 @@ const Reader: React.FC<Props> = ({ book, onClose }) => {
       setScale(Math.max(0.5, scale - 0.25));
       setControlsVisible(true);
     },
-    'Ctrl+B': () => {
+    'Ctrl+b': () => {
       if (currentBook) {
         const label = prompt('Bookmark label (optional):');
         addBookmark(currentBook.id, currentPage, label || undefined);
@@ -74,13 +78,14 @@ const Reader: React.FC<Props> = ({ book, onClose }) => {
       }}
       onClick={() => setSidebarOpen(false)}
     >
+      {/* Search overlay */}
+      <SearchBar open={searchOpen} onClose={() => setSearchOpen(false)} />
+
       {/* Main area: PDF + sidebar */}
       <div className="flex flex-1 min-h-0 relative">
         {/* PDF view */}
         <div className="flex-1 min-w-0">
           <PDFViewer filePath={book.path} />
-          {/* Search overlay */}
-          <SearchBar />
         </div>
 
         {/* Sidebar */}
@@ -101,7 +106,7 @@ const Reader: React.FC<Props> = ({ book, onClose }) => {
         <ReaderControls />
       </div>
 
-      {/* Top bar — title + sidebar toggle */}
+      {/* Top bar — title + search + sidebar toggle */}
       {controlsVisible && (
         <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 py-3 bg-gradient-to-b from-[#1a1a2e]/90 to-transparent pointer-events-none">
           <div className="pointer-events-auto flex items-center gap-3">
@@ -113,13 +118,26 @@ const Reader: React.FC<Props> = ({ book, onClose }) => {
                 <path d="m15 18-6-6 6-6" />
               </svg>
             </button>
-            <span className="text-sm font-medium text-white/80">{book.title}</span>
+            <span className="text-sm font-medium text-white/80 truncate max-w-[40vw]">{book.title}</span>
           </div>
 
           <div
             className="pointer-events-auto flex gap-1"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Search */}
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="p-1.5 rounded-lg hover:bg-white/[0.08] transition-colors text-white/50"
+              title="Search (Ctrl+F)"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.35-4.35" />
+              </svg>
+            </button>
+
+            {/* Sidebar toggle */}
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
               className="p-1.5 rounded-lg hover:bg-white/[0.08] transition-colors text-white/50"

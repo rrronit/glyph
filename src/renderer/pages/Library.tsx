@@ -7,7 +7,7 @@ const Library: React.FC = () => {
   const {
     books, recentBooks, isLoading, searchQuery, viewMode, sortBy, sortDirection, error,
     loadLibrary, loadRecentBooks, setSearchQuery, setViewMode, setSortBy, toggleSortDirection,
-    filteredBooks, scanFolder,
+    filteredBooks, addFiles,
   } = useLibraryStore();
   const openBook = useReaderStore((s) => s.openBook);
 
@@ -48,20 +48,23 @@ const Library: React.FC = () => {
           />
         </div>
 
-        {/* Scan folder */}
+        {/* Add PDFs */}
         <button
           onClick={async () => {
-            const dir = await window.glyphAPI.openFolder();
-            if (dir) scanFolder(dir);
+            const paths = await window.glyphAPI.openFiles();
+            if (paths.length) {
+              await addFiles(paths);
+            }
           }}
-          className="px-3 py-2 rounded-lg bg-white/[0.08] hover:bg-white/[0.14] text-white/60 hover:text-white/90 text-sm transition-colors flex items-center gap-2"
+          className="px-3 py-2 rounded-lg bg-white/[0.08] hover:bg-white/[0.14] text-white/60 hover:text-white/90 text-sm transition-colors flex items-center gap-2 flex-shrink-0"
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-            <line x1="12" y1="11" x2="12" y2="17"/>
-            <line x1="9" y1="14" x2="15" y2="14"/>
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="12" y1="18" x2="12" y2="12"/>
+            <line x1="9" y1="15" x2="15" y2="15"/>
           </svg>
-          Scan Folder
+          Add PDFs
         </button>
         <div className="flex rounded-lg bg-white/[0.05] p-0.5">
           <button

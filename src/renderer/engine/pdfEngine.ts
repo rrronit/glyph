@@ -53,10 +53,57 @@ export function createCanvas(): HTMLCanvasElement {
   return document.createElement('canvas');
 }
 
+/**
+ * Render a text layer over the canvas so text is selectable.
+ * Creates absolutely-positioned spans for each text item.
+ */
+export async function renderTextLayer(
+  doc: pdfjs.PDFDocumentProxy,
+  pageNum: number,
+  container: HTMLElement,
+  viewport: pdfjs.PageViewport,
+): Promise<void> {
+  const page = await doc.getPage(pageNum);
+  const textContent = await page.getTextContent();
+
+  // Clear existing
+  container.innerHTML = '';
+
+  const items = textContent.items as Array<{
+    str: string;
+    transform: number[];
+    width: number;
+    height: number;
+    dir?: string;
+  }>;
+
+  for (const item of items) {
+    if (!item.str) continue;
+
+    // Transform coordinates from PDF space to CSS pixel space
+    const tx = item.transform;
+    const angle = Math.atan2(tx[1], tx[0]);
+    const style = item.dir === 'rtl' ? 'rtl' : 'ltr';
+
+    const span = document.createElement('span');
+    span.textContent = item.str;
+    span.style.left = `${tx[4] * viewport.scale}px`;
+    span.style.top = `${(viewport.height - tx[5]) * viewport.scale - item.height * viewport.scale}px`;
+    span.style.fontSize = `${Math.sqrt(tx[2] ** 2 + tx[3] ** 2) * viewport.scale}px`;
+    if (angle !== 0) {
+      span.style.transform = `rotate(${-angle}rad)`;
+    }
+    span.style.direction = style;
+    span.className = 'pdf-text-span';
+
+    container.appendChild(span);
+  }
+}
+
 // ── Self-check (type-only — needs DOM for runtime) ────────────────────────
 // ponytail: exports verified; full test needs Electron runtime with DOM
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const _exportsExist: Record<string, unknown> = {
-  loadPdf, renderPage, getPageText, createCanvas,
+  loadPdf, renderPage, getPageText, createCanvas, renderTextLayer,
 };

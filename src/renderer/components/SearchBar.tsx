@@ -2,8 +2,12 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useReaderStore } from '../stores/reader';
 import type { SearchResult } from '../../shared/types';
 
-const SearchBar: React.FC = () => {
-  const [open, setOpen] = useState(false);
+interface Props {
+  open: boolean;
+  onClose: () => void;
+}
+
+const SearchBar: React.FC<Props> = ({ open, onClose }) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [selectedIdx, setSelectedIdx] = useState(0);
@@ -15,23 +19,30 @@ const SearchBar: React.FC = () => {
   const currentBook = useReaderStore((s) => s.currentBook);
   const goToPage = useReaderStore((s) => s.goToPage);
 
-  // Ctrl+F to open
+  // Focus input when opened
+  useEffect(() => {
+    if (open) {
+      setQuery('');
+      setResults([]);
+      setSelectedIdx(0);
+      setTimeout(() => inputRef.current?.focus(), 0);
+    }
+  }, [open]);
+
+  // Ctrl+F / Escape handlers
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
         e.preventDefault();
-        setOpen(true);
-        setTimeout(() => inputRef.current?.focus(), 0);
+        // Reader.tsx handles toggling; this just prevents browser default
       }
       if (e.key === 'Escape' && open) {
-        setOpen(false);
-        setQuery('');
-        setResults([]);
+        onClose();
       }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [open]);
+  }, [open, onClose]);
 
   // Debounced search
   useEffect(() => {
@@ -60,9 +71,9 @@ const SearchBar: React.FC = () => {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [query, totalPages]);
+  }, [query]);
 
-  // Keyboard navigation
+  // Keyboard navigation inside search
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
@@ -75,36 +86,21 @@ const SearchBar: React.FC = () => {
     if (e.key === 'Enter' && results.length > 0) {
       e.preventDefault();
       goToPage(results[selectedIdx].page);
+      onClose();
     }
     if (e.key === 'Escape') {
-      setOpen(false);
-      setQuery('');
-      setResults([]);
+      onClose();
     }
-  }, [results, selectedIdx, goToPage]);
+  }, [results, selectedIdx, goToPage, onClose]);
 
-  if (!open) {
-    // Floating search trigger icon
-    return (
-      <button
-        onClick={() => { setOpen(true); setTimeout(() => inputRef.current?.focus(), 0); }}
-        className="absolute top-4 right-4 p-2 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-white/60 hover:text-white/90 transition-colors"
-        title="Search (Ctrl+F)"
-      >
-        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <circle cx="11" cy="11" r="8" />
-          <path d="m21 21-4.35-4.35" />
-        </svg>
-      </button>
-    );
-  }
+  if (!open) return null;
 
   return (
     <div className="absolute inset-x-0 top-0 z-50">
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={() => { setOpen(false); setQuery(''); setResults([]); }}
+        onClick={onClose}
       />
 
       {/* Panel */}
@@ -129,7 +125,7 @@ const SearchBar: React.FC = () => {
             <span className="text-white/20 text-xs animate-pulse">…</span>
           )}
           <button
-            onClick={() => { setOpen(false); setQuery(''); setResults([]); }}
+            onClick={onClose}
             className="p-1 rounded-md hover:bg-white/[0.08] text-white/40 hover:text-white/70 transition-colors"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -151,7 +147,7 @@ const SearchBar: React.FC = () => {
             {results.map((r, i) => (
               <button
                 key={`${r.page}-${i}`}
-                onClick={() => { goToPage(r.page); setOpen(false); setQuery(''); setResults([]); }}
+                onClick={() => { goToPage(r.page); onClose(); }}
                 className={`w-full text-left px-4 py-3 border-b border-white/[0.04] transition-colors last:border-b-0 hover:bg-white/[0.06] ${
                   i === selectedIdx ? 'bg-white/[0.08]' : ''
                 }`}

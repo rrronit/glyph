@@ -115,14 +115,35 @@ export async function registerHandlers(): Promise<void> {
     return db.getRecentBooks(dd, 10);
   });
 
+  // ── Library: add individual files ──────────────────────
+  ipcMain.handle('library:addFiles', async (_event, paths: string[]): Promise<Book[]> => {
+    const dd = await db.getDb();
+    const books: Book[] = [];
+    for (const filePath of paths) {
+      try {
+        const meta = await metadata.extractMetadata(filePath);
+        const book = db.upsertBook(dd, {
+          id: '', path: filePath, title: meta.title || '', author: meta.author,
+          publisher: meta.publisher, pages: meta.pages, fileSize: meta.fileSize,
+          addedAt: new Date().toISOString(), tags: [],
+        });
+        books.push(book);
+      } catch {
+        console.warn(`Skipping unreadable PDF: ${filePath}`);
+      }
+    }
+    return books;
+  });
+
   // ── Dialog ──────────────────────────────────────────────
-  ipcMain.handle('dialog:openFolder', async () => {
+  ipcMain.handle('dialog:openFiles', async () => {
     const { dialog, BrowserWindow } = await import('electron');
     const result = await dialog.showOpenDialog(BrowserWindow.getFocusedWindow()!, {
-      properties: ['openDirectory'],
-      title: 'Select a folder with PDFs',
+      properties: ['openFile', 'multiSelections'],
+      filters: [{ name: 'PDF Files', extensions: ['pdf'] }],
+      title: 'Add PDFs to Library',
     });
-    return result.canceled ? null : result.filePaths[0];
+    return result.canceled ? [] : result.filePaths;
   });
 }
 

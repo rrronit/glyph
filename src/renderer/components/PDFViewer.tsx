@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import type { PDFDocumentProxy } from 'pdfjs-dist';
-import { loadPdf, renderPage } from '../engine/pdfEngine';
+import type { PDFDocumentProxy, PageViewport } from 'pdfjs-dist';
+import { loadPdf, renderPage, renderTextLayer } from '../engine/pdfEngine';
 import { useReaderStore } from '../stores/reader';
 
 interface Props {
@@ -11,7 +11,9 @@ interface Props {
 
 const PDFViewer: React.FC<Props> = ({ filePath, onReady, onError }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const textLayerRef = useRef<HTMLDivElement>(null);
   const docRef = useRef<PDFDocumentProxy | null>(null);
+  const viewportRef = useRef<PageViewport | null>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -57,9 +59,18 @@ const PDFViewer: React.FC<Props> = ({ filePath, onReady, onError }) => {
       existingCtx.clearRect(0, 0, canvas.width, canvas.height);
     }
 
-    renderPage(docRef.current, currentPage, canvas, scale).catch((err) => {
-      console.error('Render error:', err);
-    });
+    renderPage(docRef.current, currentPage, canvas, scale)
+      .then((viewport) => {
+        viewportRef.current = viewport;
+        // Render text layer
+        if (textLayerRef.current && viewportRef.current) {
+          renderTextLayer(docRef.current!, currentPage, textLayerRef.current, viewportRef.current)
+            .catch(() => {});
+        }
+      })
+      .catch((err) => {
+        console.error('Render error:', err);
+      });
   }, [currentPage, scale, status]);
 
   if (status === 'loading') {

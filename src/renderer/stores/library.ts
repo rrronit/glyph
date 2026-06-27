@@ -17,7 +17,7 @@ interface LibraryState {
 
   loadLibrary: () => Promise<void>;
   loadRecentBooks: () => Promise<void>;
-  scanFolder: (dir: string) => Promise<void>;
+  addFiles: (paths: string[]) => Promise<void>;
   setViewMode: (mode: ViewMode) => void;
   setSortBy: (sort: SortBy) => void;
   toggleSortDirection: () => void;
@@ -61,10 +61,11 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     } catch { /* keep old state */ }
   },
 
-  scanFolder: async (dir: string) => {
+  addFiles: async (paths: string[]) => {
+    if (!paths.length) return;
     set({ isLoading: true, error: null });
     try {
-      await window.glyphAPI.scanLibrary(dir);
+      await window.glyphAPI.addFiles(paths);
       const books = await window.glyphAPI.getLibrary();
       set({ books, isLoading: false });
     } catch (e) {
