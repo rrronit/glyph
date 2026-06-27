@@ -2,7 +2,6 @@
   "name": "glyph",
   "version": "1.0.0",
   "description": "Premium PDF Book Reader",
-  "type": "module",
   "main": "dist/main/main/index.js",
   "scripts": {
     "dev": "concurrently \"npm run dev:renderer\" \"npm run build:main && wait-on http://localhost:5173 && npm run dev:main\"",
@@ -14,7 +13,12 @@
     "lint": "eslint src/ --ext .ts,.tsx",
     "start": "electron ."
   },
-  "keywords": ["pdf", "reader", "ebook", "electron"],
+  "keywords": [
+    "pdf",
+    "reader",
+    "ebook",
+    "electron"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
@@ -39,6 +43,7 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@electron/rebuild": "^4.0.4",
     "@tailwindcss/vite": "^4.3.1",
     "@types/better-sqlite3": "^7.6.13",
     "@types/react": "^19.2.17",
