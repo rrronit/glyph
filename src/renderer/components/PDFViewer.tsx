@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useCallback, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
-import { loadPdf, renderPage, createCanvas } from '../engine/pdfEngine';
+import { loadPdf, renderPage } from '../engine/pdfEngine';
 import { useReaderStore } from '../stores/reader';
 
 interface Props {
