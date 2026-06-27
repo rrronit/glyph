@@ -39,7 +39,7 @@ export const useReaderStore = create<ReaderState>((set, get) => ({
         });
       }
     } catch {
-      // progress not available yet — stay on page 1
+      // progress not available yet
     }
   },
 
@@ -73,11 +73,10 @@ export const useReaderStore = create<ReaderState>((set, get) => ({
   },
 }));
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // ── Self-check ────────────────────────────────────────────────────────────
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const _argv1: string | undefined = (globalThis as any).process?.argv?.[1];
 if (_argv1?.endsWith('/reader.ts') || _argv1?.endsWith('\\reader.ts')) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (globalThis as any).window = {
     glyphAPI: {
       getProgress: async () => null,
@@ -86,36 +85,36 @@ if (_argv1?.endsWith('/reader.ts') || _argv1?.endsWith('\\reader.ts')) {
   };
 
   (async () => {
-  const store = useReaderStore;
+    const store = useReaderStore;
 
-  console.assert(store.getState().currentPage === 1, 'starts at page 1');
-  console.assert(store.getState().currentBook === null, 'starts with no book');
+    console.assert(store.getState().currentPage === 1, 'starts at page 1');
+    console.assert(store.getState().currentBook === null, 'starts with no book');
 
-  store.getState().setTotalPages(10);
-  store.getState().nextPage();
-  console.assert(store.getState().currentPage === 2, 'nextPage goes to 2');
+    store.getState().setTotalPages(10);
+    store.getState().nextPage();
+    console.assert(store.getState().currentPage === 2, 'nextPage goes to 2');
 
-  store.getState().goToPage(99);
-  console.assert(store.getState().currentPage === 10, 'goToPage clamps at max');
+    store.getState().goToPage(99);
+    console.assert(store.getState().currentPage === 10, 'goToPage clamps at max');
 
-  store.getState().goToPage(0);
-  console.assert(store.getState().currentPage === 1, 'goToPage clamps at min');
+    store.getState().goToPage(0);
+    console.assert(store.getState().currentPage === 1, 'goToPage clamps at min');
 
-  store.getState().setFitMode('width');
-  console.assert(store.getState().fitMode === 'width', 'fitMode width');
+    store.getState().setFitMode('width');
+    console.assert(store.getState().fitMode === 'width', 'fitMode width');
 
-  store.getState().setScale(1.5);
-  console.assert(store.getState().scale === 1.5, 'scale set');
+    store.getState().setScale(1.5);
+    console.assert(store.getState().scale === 1.5, 'scale set');
 
-  // Test openBook / closeBook
-  const mockBook = { id: 'b1', path: '/t.pdf', title: 'Test', pages: 50, fileSize: 100, addedAt: '', tags: [] };
-  await store.getState().openBook(mockBook as never);
-  console.assert(store.getState().currentBook?.id === 'b1', 'openBook sets currentBook');
+    const mockBook = { id: 'b1', path: '/t.pdf', title: 'Test', pages: 50, fileSize: 100, addedAt: '', tags: [] };
+    await store.getState().openBook(mockBook as never);
+    console.assert(store.getState().currentBook?.id === 'b1', 'openBook sets currentBook');
 
-  await store.getState().closeBook();
-  console.assert(store.getState().currentBook === null, 'closeBook clears currentBook');
-  console.assert(store.getState().currentPage === 1, 'closeBook resets page to 1');
+    await store.getState().closeBook();
+    console.assert(store.getState().currentBook === null, 'closeBook clears currentBook');
+    console.assert(store.getState().currentPage === 1, 'closeBook resets page to 1');
 
-  console.log('PASS: src/renderer/stores/reader.ts');
+    console.log('PASS: src/renderer/stores/reader.ts');
   })();
 }
+/* eslint-enable @typescript-eslint/no-explicit-any */
