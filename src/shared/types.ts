@@ -66,6 +66,12 @@ export interface Settings {
   defaultLibraryPath?: string;
 }
 
+export interface SearchResult {
+  page: number;
+  text: string;
+  match: string;
+}
+
 export interface GlyphAPI {
   ping: () => Promise<string>;
   scanLibrary: (dir: string) => Promise<Book[]>;
@@ -73,7 +79,7 @@ export interface GlyphAPI {
   openBook: (path: string) => Promise<Book>;
   readFile: (path: string) => Promise<ArrayBuffer>;
   getPageText: (bookId: string, page: number) => Promise<string>;
-  search: (query: string) => Promise<unknown[]>;
+  search: (params: { bookId: string; query: string }) => Promise<SearchResult[]>;
   addBookmark: (bookId: string, page: number, label?: string) => Promise<Bookmark>;
   getBookmarks: (bookId: string) => Promise<Bookmark[]>;
   removeBookmark: (id: string) => Promise<void>;

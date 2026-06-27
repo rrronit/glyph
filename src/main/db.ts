@@ -134,6 +134,11 @@ export function getAllBooks(db: Database.Database): Book[] {
   return rows.map(rowToBook);
 }
 
+export function getOneBook(db: Database.Database, id: string): Book | undefined {
+  const row = getOne<any>(db, 'SELECT * FROM books WHERE id = ?', [id]);
+  return row ? rowToBook(row) : undefined;
+}
+
 export function createBookmark(db: Database.Database, bookId: string, page: number, label?: string): Bookmark {
   const bm: Bookmark = { id: crypto.randomUUID(), bookId, page, label, createdAt: new Date().toISOString() };
   run(db, 'INSERT INTO bookmarks (id, book_id, page, label, created_at) VALUES (?,?,?,?,?)',

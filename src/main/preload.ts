@@ -11,7 +11,7 @@ contextBridge.exposeInMainWorld('glyphAPI', {
   getPageText: (bookId: string, page: number) =>
     ipcRenderer.invoke('reader:getPageText', bookId, page),
   // Search
-  search: (query: string) => ipcRenderer.invoke('search:query', query),
+  search: (params: { bookId: string; query: string }) => ipcRenderer.invoke('search:query', params),
   // Bookmarks
   addBookmark: (bookId: string, page: number, label?: string) =>
     ipcRenderer.invoke('bookmark:add', bookId, page, label),

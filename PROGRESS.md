@@ -12,8 +12,8 @@
 | 1 | Main process — SQLite database service, file watcher, IPC handlers | ✅ done |
 | 2 | Library UI — grid/list views, book card, Zustand store | ✅ done |
 | 3 | PDF reader core — pdf.js rendering, page navigation, zoom, fit modes | ✅ done |
-| 4 | Reader UI — controls, sidebar shell, keyboard shortcuts | ⬜ planned |
-| 5 | Search — FlexSearch indexing, full-text search, search UI | ⬜ planned |
+| 4 | Reader UI — controls, sidebar shell, keyboard shortcuts | 🔄 running |
+| 5 | Search — FlexSearch indexing, full-text search, search UI | 🔄 running |
 | 6 | Bookmarks — create/list/delete, bookmark sidebar, persistence | ⬜ planned |
 | 7 | Reading progress — save/restore position, recently opened, continue reading | ⬜ planned |
 | 8 | Polish — window restoration, empty states, loading skeletons, final verification | ⬜ planned |

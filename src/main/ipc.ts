@@ -1,7 +1,8 @@
-import type { Book, ReadingProgress } from '../shared/types';
+import type { Book, ReadingProgress, SearchResult } from '../shared/types';
 import * as db from './db';
 import * as watcher from './watcher';
 import * as metadata from './metadata';
+import * as searchService from './search';
 
 export async function registerHandlers(): Promise<void> {
   const { ipcMain } = await import('electron');
@@ -51,9 +52,26 @@ export async function registerHandlers(): Promise<void> {
   });
 
   // ── Search ───────────────────────────────────────────────
-  ipcMain.handle('search:query', async (_event, _query: string) => {
-    // ponytail: stub until FlexSearch is wired in Batch 5
-    return [];
+  ipcMain.handle('search:query', async (_event, params: { bookId: string; query: string }): Promise<SearchResult[]> => {
+    const { bookId, query } = params;
+    if (!query?.trim()) return [];
+
+    // Lazy-index: if no index exists yet, load the PDF and index it
+    if (!searchService.hasIndex(bookId)) {
+      // Get the book path from DB
+      const dd = await db.getDb();
+      const book = db.getOneBook(dd, bookId);
+      if (!book) return [];
+
+      // Load PDF and index
+      const fs = await import('fs/promises');
+      const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
+      const data = new Uint8Array(await fs.readFile(book.path));
+      const doc = await pdfjs.getDocument({ data }).promise;
+      await searchService.indexBookPages(doc, bookId);
+    }
+
+    return searchService.searchBook(query, bookId);
   });
 
   // ── Bookmarks ────────────────────────────────────────────
