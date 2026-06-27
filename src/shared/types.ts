@@ -71,6 +71,7 @@ export interface GlyphAPI {
   scanLibrary: (dir: string) => Promise<Book[]>;
   getLibrary: () => Promise<Book[]>;
   openBook: (path: string) => Promise<Book>;
+  readFile: (path: string) => Promise<ArrayBuffer>;
   getPageText: (bookId: string, page: number) => Promise<string>;
   search: (query: string) => Promise<unknown[]>;
   addBookmark: (bookId: string, page: number, label?: string) => Promise<Bookmark>;

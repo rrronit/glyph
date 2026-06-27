@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('glyphAPI', {
   getLibrary: () => ipcRenderer.invoke('library:getAll'),
   // Reader
   openBook: (path: string) => ipcRenderer.invoke('reader:open', path),
+  readFile: (path: string) => ipcRenderer.invoke('reader:readFile', path),
   getPageText: (bookId: string, page: number) =>
     ipcRenderer.invoke('reader:getPageText', bookId, page),
   // Search

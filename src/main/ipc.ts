@@ -39,6 +39,12 @@ export async function registerHandlers(): Promise<void> {
     });
   });
 
+  ipcMain.handle('reader:readFile', async (_event, filePath: string): Promise<ArrayBuffer> => {
+    const { readFile } = await import('fs/promises');
+    const buf = await readFile(filePath);
+    return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
+  });
+
   ipcMain.handle('reader:getPageText', async (_event, bookId: string, page: number): Promise<string> => {
     // ponytail: delegate to pdf engine later, stub for now
     return `[page ${page} text for book ${bookId}]`;
