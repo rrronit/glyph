@@ -12,6 +12,7 @@ const SearchBar: React.FC = () => {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const totalPages = useReaderStore((s) => s.totalPages);
+  const currentBook = useReaderStore((s) => s.currentBook);
   const goToPage = useReaderStore((s) => s.goToPage);
 
   // Ctrl+F to open
@@ -45,7 +46,7 @@ const SearchBar: React.FC = () => {
       setSearching(true);
       try {
         const res = await window.glyphAPI.search({
-          bookId: totalPages.toString(), // ponytail: bookId tracking tbd, use totalPages as sentinel
+          bookId: currentBook?.id || '',
           query,
         });
         setResults(res);
