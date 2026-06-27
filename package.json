@@ -3,12 +3,13 @@
   "version": "1.0.0",
   "description": "Premium PDF Book Reader",
   "type": "module",
-  "main": "src/main/index.ts",
+  "main": "dist/main/main/index.js",
   "scripts": {
-    "dev": "concurrently \"npm run dev:renderer\" \"wait-on http://localhost:5173 && npm run dev:main\"",
+    "dev": "concurrently \"npm run dev:renderer\" \"npm run build:main && wait-on http://localhost:5173 && npm run dev:main\"",
     "dev:renderer": "vite",
-    "dev:main": "cross-env NODE_ENV=development npx tsx src/main/index.ts",
-    "build": "vite build",
+    "dev:main": "cross-env NODE_ENV=development electron .",
+    "build:main": "tsc -p tsconfig.main.json",
+    "build": "npm run build:main && vite build",
     "typecheck": "tsc --noEmit -p tsconfig.main.json && tsc --noEmit -p tsconfig.renderer.json",
     "lint": "eslint src/ --ext .ts,.tsx",
     "start": "electron ."
