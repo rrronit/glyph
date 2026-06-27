@@ -15,7 +15,7 @@
 | 4 | Reader UI — controls, sidebar shell, keyboard shortcuts | ✅ done |
 | 5 | Search — FlexSearch indexing, full-text search, search UI | ✅ done |
 | 6 | Bookmarks — create/list/delete, bookmark sidebar, persistence | 🔄 running |
-| 7 | Reading progress — save/restore position, recently opened, continue reading | 🔄 running |
+| 7 | Reading progress — save/restore position, recently opened, continue reading | ✅ done |
 | 8 | Polish — window restoration, routing, final verification | ⬜ planned |
 
 ## Verification Results
@@ -28,6 +28,7 @@
 | 2026-06-27 | 3 | ✅ | ✅ | ✅ | pdfEngine, reader store, PDFViewer |
 | 2026-06-27 | 4 | ✅ | ✅ | ✅ | ReaderControls, ReaderSidebar, useKeyboard, Reader page |
 | 2026-06-27 | 5 | ✅ | ✅ | ✅ | FlexSearch index, SearchBar, IPC update |
+| 2026-06-27 | 7 | ✅ | ✅ | ✅ | Progress save/restore, continue reading, App routing |
 
 ## Changelog
 
@@ -39,3 +40,4 @@
 | 2026-06-27 | 3 | Reader: pdfEngine, reader store, PDFViewer |
 | 2026-06-27 | 4 | Reader UI: controls bar (auto-hide), sidebar (4 tabs), keyboard shortcuts, Reader page |
 | 2026-06-27 | 5 | Search: FlexSearch indexing, SearchBar (Ctrl+F overlay, debounced, results with snippets) |
+| 2026-06-27 | 7 | Reading progress: openBook/closeBook save/restore, Continue Reading hero card, App routing Library↔Reader |
