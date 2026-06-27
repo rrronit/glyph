@@ -41,8 +41,8 @@ function createWindow(): void {
 // Basic IPC: ready check
 ipcMain.handle('glyph:ping', () => 'pong');
 
-app.whenReady().then(() => {
-  registerHandlers();
+app.whenReady().then(async () => {
+  await registerHandlers();
   createWindow();
 });
 

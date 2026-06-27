@@ -24,10 +24,6 @@ function isPdf(filePath: string): boolean {
   return extname(filePath).toLowerCase() === '.pdf';
 }
 
-function isDotfile(filePath: string): boolean {
-  return basename(filePath).startsWith('.');
-}
-
 function makeBookId(): string {
   return crypto.randomUUID();
 }
@@ -115,7 +111,7 @@ export function startWatcher(
 // ── Self-check ─────────────────────────────────────────────────────────────
 
 // ponytail: self-check guard by filename, avoids import.meta.url breakage in CJS tsconfig
-if (process.argv[1]?.includes('watcher')) {
+if (process.argv[1]?.endsWith('/watcher.ts') || process.argv[1]?.endsWith('\\watcher.ts')) {
   void (async () => {
     const { mkdtemp, writeFile, rm } = await import('fs/promises');
     const { join: pjoin } = await import('path');
