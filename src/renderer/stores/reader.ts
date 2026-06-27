@@ -70,7 +70,7 @@ export const useReaderStore = create<ReaderState>((set, get) => ({
   },
   goToPage: (page) => {
     const { totalPages } = get();
-    if (totalPages === 0) return;
+    if (totalPages <= 0) { set({ currentPage: Math.max(1, page) }); return; }
     set({ currentPage: Math.max(1, Math.min(page, totalPages)) });
   },
 }));
