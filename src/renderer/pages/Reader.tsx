@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import PDFViewer from '../components/PDFViewer';
 import ReaderControls from '../components/ReaderControls';
 import ReaderSidebar from '../components/ReaderSidebar';
+import SearchBar from '../components/SearchBar';
 import { useKeyboard } from '../hooks/useKeyboard';
 import { useReaderStore } from '../stores/reader';
 import { useBookmarkStore } from '../stores/bookmarks';
@@ -73,10 +74,12 @@ const Reader: React.FC<Props> = ({ book, onClose }) => {
       onClick={() => setSidebarOpen(false)}
     >
       {/* Main area: PDF + sidebar */}
-      <div className="flex flex-1 min-h-0">
+      <div className="flex flex-1 min-h-0 relative">
         {/* PDF view */}
         <div className="flex-1 min-w-0">
           <PDFViewer filePath={book.path} />
+          {/* Search overlay */}
+          <SearchBar />
         </div>
 
         {/* Sidebar */}
