@@ -1,23 +1,37 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 interface BookCoverProps {
   coverPath?: string;
   title: string;
   className?: string;
+  fallback?: React.ReactNode;
 }
 
-const BookCover: React.FC<BookCoverProps> = ({ coverPath, title, className = '' }) => {
+function coverSrc(coverPath: string): string {
+  if (coverPath.startsWith('glyph-cover://') || coverPath.startsWith('file://')) {
+    return coverPath;
+  }
+  // Encode the absolute path into our custom protocol so Electron can serve it.
+  const encoded = encodeURI(coverPath.replace(/^\/+/, '/'));
+  return `glyph-cover://${encoded}`;
+}
+
+const BookCover: React.FC<BookCoverProps> = ({ coverPath, title, className = '', fallback }) => {
+  const [failed, setFailed] = useState(false);
   const initial = (title || '?')[0].toUpperCase();
 
-  if (coverPath) {
+  if (coverPath && !failed) {
     return (
       <img
-        src={`file://${coverPath}`}
+        src={coverSrc(coverPath)}
         alt={title}
-        className={`object-cover rounded ${className}`}
+        className={`object-cover ${className}`}
+        onError={() => setFailed(true)}
       />
     );
   }
+
+  if (fallback) return <>{fallback}</>;
 
   return (
     <div

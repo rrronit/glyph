@@ -1,19 +1,20 @@
 import React, { useEffect, useMemo } from 'react';
+import * as ContextMenu from '@radix-ui/react-context-menu';
 import { useLibraryStore, type SortBy } from '../stores/library';
 import { useReaderStore } from '../stores/reader';
 import BookCard from '../components/BookCard';
+import BookCover from '../components/BookCover';
 
 const Library: React.FC = () => {
   const {
     books, recentBooks, isLoading, searchQuery, viewMode, sortBy, sortDirection, error,
     loadLibrary, loadRecentBooks, setSearchQuery, setViewMode, setSortBy, toggleSortDirection,
-    filteredBooks, addFiles,
+    filteredBooks, addFiles, removeBook,
   } = useLibraryStore();
   const openBook = useReaderStore((s) => s.openBook);
 
   useEffect(() => { loadLibrary(); loadRecentBooks(); }, [loadLibrary, loadRecentBooks]);
 
-  // Map recentBooks to actual Book objects for cover/title display
   const continueReading = useMemo(() => {
     const bookMap = new Map(books.map((b) => [b.id, b]));
     return recentBooks
@@ -23,15 +24,19 @@ const Library: React.FC = () => {
 
   const displayed = filteredBooks();
 
-  const gridClass = viewMode === 'grid'
-    ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4'
-    : 'flex flex-col';
-
   return (
-    <div className="h-full bg-[#0f0f1a] text-white flex flex-col">
+    <div className="h-full bg-[var(--reader-bg)] text-zinc-200 flex flex-col">
       {/* Top bar */}
-      <header className="flex items-center gap-3 px-6 py-4 border-b border-white/[0.06] flex-shrink-0">
-        <h1 className="text-lg font-semibold tracking-tight mr-2">Library</h1>
+      <header className="flex items-center gap-3 px-6 py-3.5 border-b border-white/[0.04] flex-shrink-0 bg-[var(--reader-surface)]">
+        <div className="flex items-center gap-2 mr-4">
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/15">
+            <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+            </svg>
+          </div>
+          <h1 className="text-base font-semibold tracking-tight text-white">Glyph</h1>
+        </div>
 
         {/* Search */}
         <div className="flex-1 max-w-md relative">
@@ -43,8 +48,8 @@ const Library: React.FC = () => {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search books…"
-            className="w-full bg-white/[0.06] border border-white/[0.08] rounded-lg pl-10 pr-4 py-2 text-sm placeholder:text-white/20 focus:outline-none focus:border-white/20 transition-colors"
+            placeholder="Search library…"
+            className="w-full bg-white/[0.04] border border-white/[0.06] rounded-xl pl-10 pr-4 py-2 text-sm placeholder:text-white/15 focus:outline-none focus:border-violet-500/40 focus:bg-white/[0.06] transition-all"
           />
         </div>
 
@@ -52,11 +57,9 @@ const Library: React.FC = () => {
         <button
           onClick={async () => {
             const paths = await window.glyphAPI.openFiles();
-            if (paths.length) {
-              await addFiles(paths);
-            }
+            if (paths.length) await addFiles(paths);
           }}
-          className="px-3 py-2 rounded-lg bg-white/[0.08] hover:bg-white/[0.14] text-white/60 hover:text-white/90 text-sm transition-colors flex items-center gap-2 flex-shrink-0"
+          className="px-3.5 py-2 rounded-xl bg-violet-600/15 hover:bg-violet-600/25 border border-violet-500/20 text-violet-200 text-sm transition-all flex items-center gap-2 flex-shrink-0 font-medium"
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -64,12 +67,13 @@ const Library: React.FC = () => {
             <line x1="12" y1="18" x2="12" y2="12"/>
             <line x1="9" y1="15" x2="15" y2="15"/>
           </svg>
-          Add PDFs
+          Add PDF
         </button>
-        <div className="flex rounded-lg bg-white/[0.05] p-0.5">
+
+        <div className="flex rounded-xl bg-white/[0.04] p-0.5 border border-white/[0.04]">
           <button
             onClick={() => setViewMode('grid')}
-            className={`p-2 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-white/[0.12] text-white' : 'text-white/30 hover:text-white/60'}`}
+            className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white/[0.10] text-white shadow-sm' : 'text-white/25 hover:text-white/55'}`}
             title="Grid view"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -81,7 +85,7 @@ const Library: React.FC = () => {
           </button>
           <button
             onClick={() => setViewMode('list')}
-            className={`p-2 rounded-md transition-colors ${viewMode === 'list' ? 'bg-white/[0.12] text-white' : 'text-white/30 hover:text-white/60'}`}
+            className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white/[0.10] text-white shadow-sm' : 'text-white/25 hover:text-white/55'}`}
             title="List view"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -92,11 +96,10 @@ const Library: React.FC = () => {
           </button>
         </div>
 
-        {/* Sort */}
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value as SortBy)}
-          className="bg-white/[0.06] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-white/70 focus:outline-none cursor-pointer"
+          className="bg-white/[0.04] border border-white/[0.06] rounded-xl px-3 py-2 text-sm text-white/60 focus:outline-none focus:border-violet-500/40 cursor-pointer hover:bg-white/[0.06] transition-all"
         >
           <option value="added">Recently added</option>
           <option value="lastOpened">Last opened</option>
@@ -104,10 +107,9 @@ const Library: React.FC = () => {
           <option value="author">Author</option>
         </select>
 
-        {/* Sort direction toggle */}
         <button
           onClick={toggleSortDirection}
-          className="p-2 rounded-lg hover:bg-white/[0.06] text-white/40 hover:text-white/70 transition-colors"
+          className="p-2 rounded-xl hover:bg-white/[0.06] text-white/40 hover:text-white/70 transition-all"
           title={`Sort ${sortDirection === 'asc' ? 'ascending' : 'descending'}`}
         >
           <svg className={`w-4 h-4 transition-transform ${sortDirection === 'asc' ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -116,88 +118,105 @@ const Library: React.FC = () => {
         </button>
       </header>
 
-      {/* Error banner */}
       {error && (
-        <div className="mx-6 mt-3 px-4 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-300 text-sm">
+        <div className="mx-6 mt-3 px-4 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 text-sm">
           {error}
         </div>
       )}
 
-      {/* Content */}
-      <main className="flex-1 overflow-y-auto px-6 py-4">
-              {/* Continue Reading */}
+      <main className="flex-1 overflow-y-auto px-6 py-6">
         {continueReading.length > 0 && (
-          <div className="mb-6">
-            <h2 className="text-sm font-medium text-white/40 mb-3 ml-1">Continue Reading</h2>
+          <section className="mb-8">
+            <h2 className="text-xs font-semibold text-white/30 uppercase tracking-wider mb-3 ml-1">Continue Reading</h2>
             <div
-              className="group cursor-pointer rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.05] hover:border-white/[0.1] transition-all p-4 flex items-center gap-4"
-              onClick={() => {
-                const item = continueReading[0];
-                openBook(item.book);
-              }}
+              className="group cursor-pointer rounded-2xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.04] hover:border-violet-500/20 transition-all duration-200 p-4 flex items-center gap-4 max-w-2xl"
+              onClick={() => openBook(continueReading[0].book)}
             >
-              {/* Cover */}
-              <div className="w-14 h-20 rounded-lg bg-white/[0.06] flex-shrink-0 overflow-hidden flex items-center justify-center">
-                {continueReading[0].book.coverPath ? (
-                  <img src={continueReading[0].book.coverPath} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-white/20 text-lg font-serif">{continueReading[0].book.title.slice(0, 1)}</span>
-                )}
+              <div className="w-14 h-20 rounded-lg bg-gradient-to-br from-violet-500/20 to-indigo-600/20 flex-shrink-0 overflow-hidden flex items-center justify-center">
+                <BookCover
+                  coverPath={continueReading[0].book.coverPath}
+                  title={continueReading[0].book.title}
+                  className="w-full h-full"
+                  fallback={
+                    <span className="text-white/30 text-xl font-serif">{continueReading[0].book.title.slice(0, 1)}</span>
+                  }
+                />
               </div>
-              {/* Info */}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{continueReading[0].book.title}</p>
-                <p className="text-xs text-white/40 mt-0.5">
+                <p className="text-sm font-medium text-white/90 truncate">{continueReading[0].book.title}</p>
+                <p className="text-xs text-white/30 mt-1">
                   Page {continueReading[0].progress.currentPage} of {continueReading[0].progress.totalPages}
                 </p>
-                {/* Mini progress bar */}
-                <div className="mt-1.5 h-1 rounded-full bg-white/[0.06] overflow-hidden">
-                  <div
-                    className="h-full bg-white/20 rounded-full transition-all"
-                    style={{ width: `${continueReading[0].progress.completionPercent}%` }}
-                  />
+                <div className="mt-2.5 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-violet-500 to-indigo-500 rounded-full transition-all" style={{ width: `${continueReading[0].progress.completionPercent}%` }} />
                 </div>
               </div>
-              {/* Arrow */}
-              <svg className="w-4 h-4 text-white/20 group-hover:text-white/40 transition-colors flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg className="w-5 h-5 text-white/15 group-hover:text-violet-400 transition-colors flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="m9 18 6-6-6-6" />
               </svg>
             </div>
-          </div>
+          </section>
         )}
+
         {isLoading && (
-          <div className={gridClass}>
-            {Array.from({ length: 8 }).map((_, i) => (
+          <section className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
+            {Array.from({ length: 12 }).map((_, i) => (
               <div key={i} className="animate-pulse">
-                <div className="aspect-[3/4] rounded-lg bg-white/[0.04] mb-3" />
+                <div className="aspect-[3/4] rounded-xl bg-white/[0.04] mb-3" />
                 <div className="h-3 bg-white/[0.04] rounded w-3/4 mb-1.5" />
                 <div className="h-2.5 bg-white/[0.03] rounded w-1/2" />
               </div>
             ))}
-          </div>
+          </section>
         )}
 
-        {/* Empty */}
         {!isLoading && displayed.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full text-white/20 -mt-12">
-            <svg className="w-16 h-16 mb-4 opacity-30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-            </svg>
-            <p className="text-sm">
-              {books.length === 0
-                ? 'No books yet. Add a PDF to get started.'
-                : 'No books match your search.'}
+          <div className="flex flex-col items-center justify-center h-full text-white/30 -mt-12">
+            <div className="w-20 h-20 rounded-2xl bg-white/[0.03] border border-white/[0.05] flex items-center justify-center mb-5">
+              <svg className="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+              </svg>
+            </div>
+            <p className="text-base font-medium mb-1">
+              {books.length === 0 ? 'Your library is empty' : 'No books match your search'}
+            </p>
+            <p className="text-sm text-white/20">
+              {books.length === 0 ? 'Add a PDF to get started.' : 'Try a different search term.'}
             </p>
           </div>
         )}
 
-        {/* Books */}
         {!isLoading && displayed.length > 0 && (
-          <div className={gridClass}>
+          <section className={viewMode === 'grid'
+            ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5'
+            : 'flex flex-col gap-1'
+          }>
             {displayed.map((book) => (
-              <BookCard key={book.id} book={book} viewMode={viewMode} onClick={() => openBook(book)} />
+              <ContextMenu.Root key={book.id}>
+                <ContextMenu.Trigger className="contents">
+                  <BookCard book={book} viewMode={viewMode} onClick={() => openBook(book)} />
+                </ContextMenu.Trigger>
+                <ContextMenu.Portal>
+                  <ContextMenu.Content
+                    className="min-w-[160px] rounded-xl bg-[#1a1a1a] border border-white/[0.08] p-1 shadow-2xl shadow-black/60 backdrop-blur-sm z-50"
+                  >
+                    <ContextMenu.Item
+                      className="flex items-center gap-2 px-3 py-2 text-sm text-red-300/80 hover:text-red-200 hover:bg-red-500/10 rounded-lg cursor-pointer outline-none select-none transition-colors"
+                      onClick={() => removeBook(book.id)}
+                    >
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                        <line x1="10" y1="11" x2="10" y2="17" />
+                        <line x1="14" y1="11" x2="14" y2="17" />
+                      </svg>
+                      Remove
+                    </ContextMenu.Item>
+                  </ContextMenu.Content>
+                </ContextMenu.Portal>
+              </ContextMenu.Root>
             ))}
-          </div>
+          </section>
         )}
       </main>
     </div>
