@@ -1,50 +1,60 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { useHighlightStore } from '../stores/highlights';
 import { useReaderStore } from '../stores/reader';
-import { useBookmarkStore } from '../stores/bookmarks';
-
-type TabId = 'outline' | 'bookmarks' | 'highlights' | 'info';
-
-const TABS: { id: TabId; label: string }[] = [
-  { id: 'outline', label: 'Outline' },
-  { id: 'bookmarks', label: 'Bookmarks' },
-  { id: 'highlights', label: 'Highlights' },
-  { id: 'info', label: 'Info' },
-];
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
+  onClick?: (e: React.MouseEvent) => void;
 }
 
-const ReaderSidebar: React.FC<Props> = ({ isOpen, onClose }) => {
-  const [activeTab, setActiveTab] = useState<TabId>('outline');
+const colorMap: Record<string, string> = {
+  yellow: 'bg-yellow-500/20 text-yellow-500/90 border-yellow-500/20',
+  green: 'bg-green-500/20 text-green-500/90 border-green-500/20',
+  blue: 'bg-blue-500/20 text-blue-500/90 border-blue-500/20',
+  pink: 'bg-pink-500/20 text-pink-500/90 border-pink-500/20',
+};
 
-  const currentBook = useReaderStore((s) => s.currentBook);
-  const currentPage = useReaderStore((s) => s.currentPage);
-  const goToPage = useReaderStore((s) => s.goToPage);
+const dotColorMap: Record<string, string> = {
+  yellow: 'bg-yellow-500',
+  green: 'bg-green-500',
+  blue: 'bg-blue-500',
+  pink: 'bg-pink-500',
+};
 
-  const { bookmarks, isLoading, loadBookmarks, addBookmark, removeBookmark } = useBookmarkStore();
+const ReaderSidebar: React.FC<Props> = ({ isOpen, onClose, onClick }) => {
+  const highlights = useHighlightStore(s => s.highlights);
+  const removeHighlight = useHighlightStore(s => s.removeHighlight);
+  const goToPage = useReaderStore(s => s.goToPage);
 
-  useEffect(() => {
-    if (currentBook) {
-      loadBookmarks(currentBook.id);
-    }
-  }, [currentBook, loadBookmarks]);
+  // Group highlights by page
+  const highlightsByPage = highlights.reduce((acc, hl) => {
+    if (!acc[hl.page]) acc[hl.page] = [];
+    acc[hl.page].push(hl);
+    return acc;
+  }, {} as Record<number, typeof highlights>);
 
-  if (!isOpen) return null;
-
-  const handleAddBookmark = async () => {
-    if (!currentBook) return;
-    const label = prompt('Bookmark label (optional):');
-    await addBookmark(currentBook.id, currentPage, label || undefined);
-  };
+  const sortedPages = Object.keys(highlightsByPage).map(Number).sort((a, b) => a - b);
 
   return (
-    <aside className="w-72 h-full bg-[#0a0a14]/90 backdrop-blur-2xl border-l border-white/[0.04] flex flex-col flex-shrink-0 shadow-2xl shadow-black/30">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3.5 border-b border-white/[0.04]">
-        <span className="text-sm font-medium text-white/60 tracking-wide">Reader</span>
-        <button onClick={onClose} className="p-1.5 rounded-full hover:bg-white/[0.06] text-white/25 hover:text-white/50 transition-all">
+    <aside
+      onClick={onClick}
+      aria-hidden={!isOpen}
+      className={`absolute top-0 right-0 z-30 flex h-full w-80 flex-shrink-0 flex-col border-l border-[var(--border-strong)] bg-[var(--reader-surface)]/95 backdrop-blur-3xl shadow-2xl shadow-black/80 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform ${
+        isOpen ? 'translate-x-0' : 'pointer-events-none translate-x-full'
+      }`}
+    >
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
+          <div className="flex items-center gap-2">
+            <svg className="w-4 h-4 text-[var(--text-muted)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+            <span className="text-sm font-semibold text-[var(--text-main)]">Highlights</span>
+          </div>
+          <button
+          onClick={onClose}
+          className="p-1.5 rounded-lg hover:bg-white/[0.08] text-[var(--text-muted)] hover:text-[var(--text-main)] transition-all"
+        >
           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
@@ -52,114 +62,59 @@ const ReaderSidebar: React.FC<Props> = ({ isOpen, onClose }) => {
         </button>
       </div>
 
-      {/* Tabs */}
-      <div className="flex px-3 pt-3 pb-2 gap-1">
-        {TABS.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 py-1.5 text-[11px] font-medium rounded-lg transition-all ${
-              activeTab === tab.id
-                ? 'bg-white/[0.06] text-white/80'
-                : 'text-white/20 hover:text-white/40 hover:bg-white/[0.02]'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Bookmarks tab */}
-      {activeTab === 'bookmarks' && (
-        <div className="flex-1 flex flex-col min-h-0">
-          {/* Add button */}
-          <div className="px-3 py-2">
-            <button
-              onClick={handleAddBookmark}
-              disabled={!currentBook}
-              className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.04] hover:border-white/[0.08] text-white/40 hover:text-white/70 text-xs font-medium transition-all disabled:opacity-20 disabled:cursor-not-allowed"
-            >
-              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+      <div className="flex-1 overflow-y-auto smooth-scroll px-4 py-5 space-y-8">
+        {sortedPages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-center opacity-50">
+            <div className="w-12 h-12 rounded-2xl border-2 border-dashed border-[var(--text-muted)] mb-3 flex items-center justify-center">
+              <svg className="w-5 h-5 text-[var(--text-muted)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
               </svg>
-              Bookmark page {currentPage}
-            </button>
+            </div>
+            <p className="text-sm text-[var(--text-main)]">No highlights yet</p>
+            <p className="text-xs text-[var(--text-muted)] mt-1 max-w-[200px]">Select text in the book to create highlights.</p>
           </div>
-
-          {/* List */}
-          <div className="flex-1 overflow-y-auto px-2">
-            {isLoading && (
-              <div className="p-4 text-center text-white/10 text-xs animate-pulse">Loading…</div>
-            )}
-
-            {!isLoading && bookmarks.length === 0 && (
-              <div className="flex flex-col items-center justify-center h-full text-white/10 px-4 text-center">
-                <svg className="w-8 h-8 mb-3 opacity-20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-                </svg>
-                <p className="text-xs">No bookmarks yet</p>
+        ) : (
+          sortedPages.map((pageNum) => (
+            <div key={pageNum} className="space-y-3">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="h-px bg-[var(--border)] flex-1" />
+                <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider px-1">
+                  Page {pageNum}
+                </span>
+                <div className="h-px bg-[var(--border)] flex-1" />
               </div>
-            )}
 
-            {!isLoading &&
-              bookmarks.map((bm) => (
-                <div
-                  key={bm.id}
-                  className="group flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-white/[0.04] transition-all"
+              {highlightsByPage[pageNum].map((hl) => (
+                <div 
+                  key={hl.id} 
+                  className="group relative flex flex-col gap-2 rounded-xl p-3 border border-[var(--border)] hover:border-[var(--border-strong)] bg-[var(--reader-bg)]/50 transition-all cursor-pointer"
+                  onClick={() => goToPage(pageNum)}
                 >
+                  <div className="flex gap-2">
+                    <div className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${dotColorMap[hl.color || 'yellow']}`} />
+                    <p className="text-sm text-[var(--text-main)] leading-relaxed italic opacity-90 line-clamp-4">
+                      "{hl.text}"
+                    </p>
+                  </div>
+                  
                   <button
-                    onClick={() => goToPage(bm.page)}
-                    className="flex-1 text-left min-w-0"
-                  >
-                    <span className="text-[11px] text-blue-400/60 font-mono font-medium">p.{bm.page}</span>
-                    {bm.label && (
-                      <p className="text-sm text-white/60 truncate mt-0.5">{bm.label}</p>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => removeBookmark(bm.id)}
-                    className="p-1 rounded-md opacity-0 group-hover:opacity-100 hover:bg-white/[0.06] text-white/15 hover:text-red-400/80 transition-all"
-                    title="Remove"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeHighlight(hl.id);
+                    }}
+                    className="absolute top-2 right-2 p-1.5 rounded-md opacity-0 group-hover:opacity-100 hover:bg-red-500/20 text-red-400 transition-all"
+                    title="Remove Highlight"
                   >
                     <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                      <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
                     </svg>
                   </button>
                 </div>
               ))}
-          </div>
-        </div>
-      )}
-
-      {/* Other tabs — stubs */}
-      {activeTab !== 'bookmarks' && (
-        <div className="flex-1 overflow-y-auto p-4 text-sm text-white/10">
-          {activeTab === 'outline' && <p>No outline available.</p>}
-          {activeTab === 'highlights' && <p>No highlights yet.</p>}
-          {activeTab === 'info' && currentBook && (
-            <div className="space-y-4">
-              <div>
-                <p className="text-white/10 text-[10px] uppercase tracking-widest mb-1">Title</p>
-                <p className="text-white/60 text-sm">{currentBook.title}</p>
-              </div>
-              {currentBook.author && (
-                <div>
-                  <p className="text-white/10 text-[10px] uppercase tracking-widest mb-1">Author</p>
-                  <p className="text-white/60 text-sm">{currentBook.author}</p>
-                </div>
-              )}
-              <div>
-                <p className="text-white/10 text-[10px] uppercase tracking-widest mb-1">Pages</p>
-                <p className="text-white/60 text-sm">{currentBook.pages}</p>
-              </div>
-              <div>
-                <p className="text-white/10 text-[10px] uppercase tracking-widest mb-1">Path</p>
-                <p className="text-white/30 text-xs truncate">{currentBook.path}</p>
-              </div>
             </div>
-          )}
-        </div>
-      )}
+          ))
+        )}
+      </div>
     </aside>
   );
 };

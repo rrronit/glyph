@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import PDFViewer from '../components/PDFViewer';
 import ReaderControls from '../components/ReaderControls';
 import ReaderSidebar from '../components/ReaderSidebar';
 import SearchBar from '../components/SearchBar';
+import ReaderSettings from '../components/ReaderSettings';
 import { useKeyboard } from '../hooks/useKeyboard';
 import { useReaderStore } from '../stores/reader';
 import { useBookmarkStore } from '../stores/bookmarks';
+import { useAIChatStore } from '../stores/aiChat';
 import type { Book } from '../../shared/types';
 
 interface Props {
@@ -13,28 +15,38 @@ interface Props {
   onClose?: () => void;
 }
 
+const HIDE_CONTROLS_DELAY_MS = 10_000;
+
 const Reader: React.FC<Props> = ({ book, onClose }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [controlsVisible, setControlsVisible] = useState(true);
   const [searchOpen, setSearchOpen] = useState(false);
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const { nextPage, prevPage, setScale, scale, openBook, closeBook, currentBook, currentPage } = useReaderStore();
+  const { nextPage, prevPage, setScale, scale, openBook, closeBook, currentBook, currentPage, selectedText, laserPointerActive } = useReaderStore();
   const addBookmark = useBookmarkStore((s) => s.addBookmark);
+  const appendContext = useAIChatStore((s) => s.appendContext);
+  const setChatOpen = useAIChatStore((s) => s.setOpen);
 
-  // Sync book to store on mount / unmount
   useEffect(() => {
     openBook(book);
     return () => { closeBook(); };
   }, []);
+
+  useEffect(() => {
+    if (sidebarOpen && searchOpen) setSearchOpen(false);
+  }, [sidebarOpen, searchOpen]);
 
   useKeyboard({
     ' ': () => {
       nextPage();
       setControlsVisible(false);
     },
-    ArrowRight: nextPage,
-    'Shift+Space': prevPage,
     ArrowLeft: prevPage,
+    ArrowRight: nextPage,
+    '<': prevPage,
+    '>': nextPage,
+    'Shift+Space': prevPage,
     Escape: () => {
       if (searchOpen) {
         setSearchOpen(false);
@@ -44,15 +56,26 @@ const Reader: React.FC<Props> = ({ book, onClose }) => {
         onClose?.();
       }
     },
+    'Ctrl+f': () => setSearchOpen(true),
+    'Cmd+f': () => setSearchOpen(true),
+    'Ctrl+l': () => {
+      if (selectedText) {
+        appendContext(`Page ${currentPage}: "${selectedText}"`);
+        setChatOpen(true);
+      }
+    },
+    'Cmd+l': () => {
+      if (selectedText) {
+        appendContext(`Page ${currentPage}: "${selectedText}"`);
+        setChatOpen(true);
+      }
+    },
     f: () => {
       if (document.fullscreenElement) {
         document.exitFullscreen();
       } else {
         document.documentElement.requestFullscreen();
       }
-    },
-    'Ctrl+f': () => {
-      setSearchOpen(true);
     },
     '+': () => {
       setScale(Math.min(4, scale + 0.25));
@@ -70,87 +93,144 @@ const Reader: React.FC<Props> = ({ book, onClose }) => {
     },
   });
 
+  const showControlsTemporarily = useCallback(() => {
+    setControlsVisible(true);
+    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+
+    hideTimerRef.current = setTimeout(() => {
+      if (!searchOpen) {
+        setControlsVisible(false);
+        setSidebarOpen(false);
+      }
+    }, HIDE_CONTROLS_DELAY_MS);
+  }, [searchOpen]);
+
+  // Auto-hide reader chrome after inactivity
+  useEffect(() => {
+    const handleActivity = () => showControlsTemporarily();
+
+    window.addEventListener('mousemove', handleActivity);
+    window.addEventListener('keydown', handleActivity);
+    showControlsTemporarily();
+
+    return () => {
+      window.removeEventListener('mousemove', handleActivity);
+      window.removeEventListener('keydown', handleActivity);
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    };
+  }, [showControlsTemporarily]);
+
+  // Laser pointer trailing effect
+  const [laserPos, setLaserPos] = useState({ x: -100, y: -100 });
+  const [laserVisible, setLaserVisible] = useState(false);
+  const laserRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!laserPointerActive) return;
+
+    let timeout: ReturnType<typeof setTimeout>;
+    
+    const handlePointerMove = (e: MouseEvent) => {
+      setLaserPos({ x: e.clientX, y: e.clientY });
+      setLaserVisible(true);
+      
+      clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        setLaserVisible(false);
+      }, 2000);
+    };
+
+    window.addEventListener('mousemove', handlePointerMove);
+    return () => {
+      window.removeEventListener('mousemove', handlePointerMove);
+      clearTimeout(timeout);
+    };
+  }, [laserPointerActive]);
+
+  const fileName = book.path.split(/[/\\]/).pop() || book.title;
+
   return (
-    <div
-      className="h-full bg-[#1a1a2e] flex flex-col cursor-default"
-      onMouseMove={() => {
-        if (!controlsVisible) setControlsVisible(true);
-      }}
-      onClick={() => setSidebarOpen(false)}
-    >
-      {/* Search overlay */}
+    <div className="h-full bg-[var(--reader-bg)] flex flex-col relative overflow-hidden">
       <SearchBar open={searchOpen} onClose={() => setSearchOpen(false)} />
 
-      {/* Main area: PDF + sidebar */}
-      <div className="flex flex-1 min-h-0 relative">
-        {/* PDF view */}
-        <div className="flex-1 min-w-0">
+      {/* Main: PDF + sidebar */}
+      <div className={`relative flex min-h-0 flex-1 overflow-hidden ${laserPointerActive ? 'laser-pointer' : ''}`}>
+        <div className="h-full min-w-0 flex-1" onClick={() => {
+          setSidebarOpen(false);
+          setSearchOpen(false);
+        }}>
           <PDFViewer filePath={book.path} />
         </div>
 
-        {/* Sidebar */}
+        <div
+          aria-hidden={!sidebarOpen}
+          className={`absolute inset-0 z-20 bg-black/40 transition-opacity duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+            sidebarOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
+          }`}
+          onClick={() => setSidebarOpen(false)}
+        />
+
         <ReaderSidebar
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
+          onClick={(e) => e.stopPropagation()}
         />
       </div>
 
-      {/* Controls bar — auto-hide */}
+      {/* Bottom controls */}
       <div
-        className={`flex-shrink-0 transition-all duration-300 ${
-          controlsVisible
-            ? 'opacity-100 translate-y-0'
-            : 'opacity-0 translate-y-full pointer-events-none'
+        className={`absolute left-0 right-0 bottom-0 z-20 flex justify-center transition-all duration-300 ease-out ${
+          controlsVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6 pointer-events-none'
         }`}
       >
-        <ReaderControls />
+        <ReaderControls 
+          onToggleSidebar={() => setSidebarOpen(s => !s)}
+          sidebarOpen={sidebarOpen}
+          onOpenSearch={() => setSearchOpen(true)}
+        />
       </div>
 
-      {/* Top bar — title + search + sidebar toggle */}
-      {controlsVisible && (
-        <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 py-3 bg-gradient-to-b from-[#1a1a2e]/90 to-transparent pointer-events-none">
-          <div className="pointer-events-auto flex items-center gap-3">
-            <button
-              onClick={() => onClose?.()}
-              className="p-1.5 rounded-lg hover:bg-white/[0.08] transition-colors text-white/50"
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="m15 18-6-6 6-6" />
-              </svg>
-            </button>
-            <span className="text-sm font-medium text-white/80 truncate max-w-[40vw]">{book.title}</span>
-          </div>
-
-          <div
-            className="pointer-events-auto flex gap-1"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Search */}
-            <button
-              onClick={() => setSearchOpen(true)}
-              className="p-1.5 rounded-lg hover:bg-white/[0.08] transition-colors text-white/50"
-              title="Search (Ctrl+F)"
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="11" cy="11" r="8" />
-                <path d="m21 21-4.35-4.35" />
-              </svg>
-            </button>
-
-            {/* Sidebar toggle */}
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-1.5 rounded-lg hover:bg-white/[0.08] transition-colors text-white/50"
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="4" y1="6" x2="20" y2="6" />
-                <line x1="4" y1="12" x2="20" y2="12" />
-                <line x1="4" y1="18" x2="20" y2="18" />
-              </svg>
-            </button>
-          </div>
-        </div>
+      {/* Laser Pointer overlay */}
+      {laserPointerActive && (
+        <div 
+          ref={laserRef}
+          className="pointer-events-none fixed z-[100] rounded-full bg-red-500 shadow-[0_0_12px_3px_rgba(239,68,68,0.8)] mix-blend-screen transition-opacity duration-300"
+          style={{
+            left: laserPos.x - 3,
+            top: laserPos.y - 3,
+            width: 6,
+            height: 6,
+            opacity: laserVisible ? 1 : 0,
+            transform: 'translateZ(0)',
+          }}
+        />
       )}
+
+      {/* Top bar — hidden while sidebar is open */}
+      <div
+        className={`absolute top-0 left-0 right-0 z-30 flex items-start justify-between px-5 pt-4 transition-all duration-300 ease-out pointer-events-none ${
+          controlsVisible && !sidebarOpen
+            ? 'opacity-100 translate-y-0'
+            : 'opacity-0 -translate-y-4'
+        }`}
+      >
+        <button
+          onClick={() => {
+            // Reset to page fit when going back to library
+            useReaderStore.getState().setFitMode('page');
+            onClose?.();
+          }}
+          className="pointer-events-auto group flex max-w-[58vw] items-center gap-2.5 rounded-full border border-[var(--border-strong)] bg-[var(--reader-bg)]/80 py-2 pl-2 pr-3.5 text-sm font-medium text-[var(--text-muted)] shadow-xl shadow-black/20 backdrop-blur-md transition-all hover:border-[var(--border-strong)] hover:bg-[var(--reader-surface)]/90 hover:text-[var(--text-main)]"
+          title="Back to Library"
+        >
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--border)] text-[var(--text-muted)] transition-colors group-hover:text-[var(--text-main)]">
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="m15 18-6-6 6-6" />
+            </svg>
+          </span>
+          <span className="truncate">{fileName}</span>
+        </button>
+      </div>
     </div>
   );
 };
