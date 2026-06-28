@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import type { Book } from '../../shared/types';
 
-export type FitMode = 'width' | 'page' | 'auto';
+export type FitMode = 'width' | 'page' | 'auto' | 'manual';
+export type ThemeMode = 'light' | 'charcoal' | 'sepia';
 
 interface ReaderState {
   currentBook: Book | null;
@@ -9,13 +10,19 @@ interface ReaderState {
   totalPages: number;
   scale: number;
   fitMode: FitMode;
+  theme: ThemeMode;
+  selectedText: string;
+  laserPointerActive: boolean;
 
   openBook: (book: Book) => Promise<void>;
   closeBook: () => Promise<void>;
   setCurrentPage: (page: number) => void;
   setTotalPages: (total: number) => void;
-  setScale: (scale: number) => void;
+  setScale: (scale: number, options?: { manual?: boolean }) => void;
   setFitMode: (mode: FitMode) => void;
+  setTheme: (theme: ThemeMode) => void;
+  setSelectedText: (text: string) => void;
+  setLaserPointerActive: (active: boolean) => void;
   nextPage: () => void;
   prevPage: () => void;
   goToPage: (page: number) => void;
@@ -26,11 +33,14 @@ export const useReaderStore = create<ReaderState>((set, get) => ({
   currentPage: 1,
   totalPages: 0,
   scale: 1.0,
-  fitMode: 'auto',
+  fitMode: 'page',
+  theme: 'charcoal',
+  selectedText: '',
+  laserPointerActive: false,
 
   openBook: async (book: Book) => {
     console.log('[reader] openBook called:', book.path);
-    set({ currentBook: book, currentPage: 1, totalPages: 0 });
+    set({ currentBook: book, currentPage: 1, totalPages: 0, fitMode: 'page', scale: 1 });
     try {
       const prog = await window.glyphAPI.getProgress(book.id);
       if (prog) {
@@ -57,8 +67,14 @@ export const useReaderStore = create<ReaderState>((set, get) => ({
 
   setCurrentPage: (page) => set({ currentPage: page }),
   setTotalPages: (total) => set({ totalPages: total }),
-  setScale: (scale) => set({ scale }),
+  setScale: (scale: number, options?: { manual?: boolean }) => set((state) => ({
+    scale,
+    fitMode: options?.manual === false ? state.fitMode : 'manual',
+  })),
   setFitMode: (mode) => set({ fitMode: mode }),
+  setTheme: (theme) => set({ theme }),
+  setSelectedText: (text) => set({ selectedText: text }),
+  setLaserPointerActive: (active) => set({ laserPointerActive: active }),
 
   nextPage: () => {
     const { currentPage, totalPages } = get();
