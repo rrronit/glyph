@@ -1,13 +1,51 @@
 @import "tailwindcss";
 
 :root {
-  --reader-bg: #0a0a14;
-  --reader-text: #e4e4e7;
-  --accent: #3b82f6;
-  --accent-glow: rgba(59, 130, 246, 0.15);
-  --glass-bg: rgba(15, 15, 26, 0.75);
-  --glass-border: rgba(255, 255, 255, 0.06);
-  --glass-bg-hover: rgba(255, 255, 255, 0.06);
+  /* Default (Light/Base) */
+  --reader-bg: #1a1a1a;
+  --reader-surface: #141414;
+  --paper: #fcfcfa;
+  --ink: #1a1a1a;
+  --accent: #8b5cf6;
+  --accent-glow: rgba(139, 92, 246, 0.12);
+  --border: rgba(255, 255, 255, 0.06);
+  --border-strong: rgba(255, 255, 255, 0.10);
+  --text-main: #f4f4f5;
+  --text-muted: #a1a1aa;
+  --text-dim: #71717a;
+  --pdf-filter: none;
+}
+
+/* Charcoal Theme (Premium warm dark) */
+.theme-charcoal {
+  --reader-bg: #181716;
+  --reader-surface: #1A1817;
+  --paper: #1A1817;
+  --ink: #E4DDD3;
+  --accent: #D6A04E;
+  --accent-glow: rgba(214, 160, 78, 0.15);
+  --border: rgba(255, 255, 255, 0.04);
+  --border-strong: rgba(255, 255, 255, 0.08);
+  --text-main: #E4DDD3;
+  --text-muted: #C8C1B6;
+  --text-dim: #9E978D;
+  --pdf-filter: invert(0.92) hue-rotate(180deg) sepia(0.3) brightness(0.95) contrast(0.95);
+}
+
+/* Sepia Theme */
+.theme-sepia {
+  --reader-bg: #dcd3c6;
+  --reader-surface: #e8e0d5;
+  --paper: #f4ecd8;
+  --ink: #433422;
+  --accent: #C48A5A;
+  --accent-glow: rgba(196, 138, 90, 0.15);
+  --border: rgba(0, 0, 0, 0.08);
+  --border-strong: rgba(0, 0, 0, 0.15);
+  --text-main: #433422;
+  --text-muted: #6b5a45;
+  --text-dim: #8b7962;
+  --pdf-filter: sepia(0.4) brightness(0.95);
 }
 
 * {
@@ -15,17 +53,68 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-body {
+html, body {
   margin: 0;
+  padding: 0;
   overflow: hidden;
-  background: #0a0a14;
-  color: #e4e4e7;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', system-ui, sans-serif;
+  background: var(--reader-bg);
+  color: var(--text-main);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-size: 14px;
 }
 
 #root {
   height: 100vh;
   width: 100vw;
+}
+
+/* Paper page in reader */
+.shadow-page {
+  box-shadow:
+    0 1px 2px rgba(0,0,0,0.04),
+    0 4px 12px rgba(0,0,0,0.12),
+    0 16px 40px rgba(0,0,0,0.22);
+}
+
+.bg-paper {
+  background: var(--paper);
+  user-select: none;
+}
+
+canvas {
+  filter: var(--pdf-filter);
+  mix-blend-mode: multiply;
+  background-color: var(--paper);
+  border-radius: inherit;
+  display: block; /* Ensure no inline baseline gap */
+}
+
+/* PDF highlight overlay layer */
+.pdf-highlight-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+  /* Don't filter the highlight layer directly, or it breaks blend modes. Instead let it blend with the filtered canvas below */
+}
+.pdf-highlight-overlay {
+  position: absolute;
+  border-radius: 2px;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+
+/* In dark themes, multiply makes things invisible. Switch to screen. */
+.theme-charcoal .pdf-highlight-overlay {
+  mix-blend-mode: screen;
+}
+
+.theme-charcoal canvas {
+  mix-blend-mode: screen;
 }
 
 /* PDF text selection layer */
@@ -39,12 +128,15 @@ body {
   line-height: 1.0;
   user-select: text;
   pointer-events: auto;
+  opacity: 1;
+  z-index: 2;
 }
 .pdf-text-layer ::selection {
-  background: rgba(0, 130, 255, 0.5);
+  background: var(--accent-glow);
   color: transparent;
 }
-.pdf-text-layer .pdf-text-span {
+.pdf-text-layer span,
+.pdf-text-layer br {
   color: transparent;
   position: absolute;
   white-space: pre;
@@ -52,20 +144,42 @@ body {
   transform-origin: 0% 0%;
 }
 
-/* Smooth scrolling for library */
-.smooth-scroll {
-  scroll-behavior: smooth;
+canvas {
+  filter: var(--pdf-filter);
+  mix-blend-mode: multiply;
+}
+
+/* Custom laser cursor */
+.laser-pointer,
+.laser-pointer * {
+  cursor: none !important;
 }
 
 /* Selection color */
 ::selection {
-  background: rgba(59, 130, 246, 0.3);
-  color: #e4e4e7;
+  background: var(--accent-glow);
+  color: inherit;
+}
+
+/* Focus ring */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus,
+select:focus {
+  outline: 1.5px solid var(--accent);
+  outline-offset: 1px;
 }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
@@ -75,5 +189,25 @@ body {
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.14);
+}
+
+/* Smooth scrolling */
+.smooth-scroll {
+  scroll-behavior: smooth;
+}
+
+/* Input reset */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+select option {
+  background: #1a1a1a;
+  color: #e4e4e7;
 }
