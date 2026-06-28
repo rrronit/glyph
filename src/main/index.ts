@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, protocol } from 'electron';
 import * as fs from 'fs';
 import * as path from 'path';
 import { registerHandlers } from './ipc';
@@ -6,6 +6,14 @@ import { registerHandlers } from './ipc';
 let mainWindow: BrowserWindow | null = null;
 
 const isDev = process.env.NODE_ENV === 'development';
+
+// ── Cover image protocol ──────────────────────────────────────────────────
+// Renderer can't load file:// URLs due to same-origin policy, so we expose
+// local cover files via a custom `glyph-cover://` protocol.
+protocol.registerSchemesAsPrivileged([{
+  scheme: 'glyph-cover',
+  privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true },
+}]);
 
 // ── Window state persistence ─────────────────────────────────────────────
 
@@ -100,6 +108,28 @@ function createWindow(): void {
 ipcMain.handle('glyph:ping', () => 'pong');
 
 app.whenReady().then(async () => {
+  protocol.handle('glyph-cover', async (request) => {
+    try {
+      // URL format: glyph-cover:///<absolute-path-with-leading-slash>
+      const url = new URL(request.url);
+      const filePath = decodeURIComponent(url.pathname);
+      if (!filePath) {
+        return new Response('No path', { status: 400 });
+      }
+      const { readFile } = await import('fs/promises');
+      const buffer = await readFile(filePath);
+      return new Response(new Uint8Array(buffer), {
+        status: 200,
+        headers: {
+          'Content-Type': 'image/png',
+          'Cache-Control': 'no-cache',
+        },
+      });
+    } catch (err) {
+      return new Response(`Cover load failed: ${(err as Error).message}`, { status: 500 });
+    }
+  });
+
   await registerHandlers();
   createWindow();
 });

@@ -1,5 +1,5 @@
 import Database from 'better-sqlite3';
-import type { Book, Bookmark, ReadingProgress } from '../shared/types';
+import type { Book, Bookmark, Highlight, ReadingProgress } from '../shared/types';
 
 let db: Database.Database | null = null;
 
@@ -124,9 +124,13 @@ export function upsertBook(db: Database.Database, book: Book): Book {
   book.id = book.id || crypto.randomUUID();
   book.addedAt = book.addedAt || new Date().toISOString();
   book.tags = book.tags || [];
-  run(db, `INSERT INTO books (id, path, title, author, publisher, pages, file_size, added_at, tags) VALUES (?,?,?,?,?,?,?,?,?)`,
-    [book.id, book.path, book.title, book.author || null, book.publisher || null, book.pages, book.fileSize, book.addedAt, JSON.stringify(book.tags)]);
+  run(db, `INSERT INTO books (id, path, title, author, publisher, pages, cover_path, file_size, added_at, tags) VALUES (?,?,?,?,?,?,?,?,?,?)`,
+    [book.id, book.path, book.title, book.author || null, book.publisher || null, book.pages, book.coverPath || null, book.fileSize, book.addedAt, JSON.stringify(book.tags)]);
   return book;
+}
+
+export function setBookCover(db: Database.Database, bookId: string, coverPath: string): void {
+  run(db, 'UPDATE books SET cover_path = ? WHERE id = ?', [coverPath, bookId]);
 }
 
 export function getAllBooks(db: Database.Database): Book[] {
@@ -153,6 +157,52 @@ export function getBookmarks(db: Database.Database, bookId: string): Bookmark[] 
 
 export function deleteBookmark(db: Database.Database, id: string): void {
   run(db, 'DELETE FROM bookmarks WHERE id = ?', [id]);
+}
+
+export function deleteBook(db: Database.Database, id: string): void {
+  run(db, 'DELETE FROM books WHERE id = ?', [id]);
+}
+
+export function createHighlight(
+  db: Database.Database,
+  bookId: string,
+  page: number,
+  text: string,
+  color = 'yellow',
+  note?: string,
+): Highlight {
+  const hl: Highlight = {
+    id: crypto.randomUUID(),
+    bookId,
+    page,
+    text,
+    color,
+    note,
+    createdAt: new Date().toISOString(),
+  };
+  run(
+    db,
+    'INSERT INTO highlights (id, book_id, page, text, color, note, created_at) VALUES (?,?,?,?,?,?,?)',
+    [hl.id, hl.bookId, hl.page, hl.text, hl.color, hl.note || null, hl.createdAt],
+  );
+  return hl;
+}
+
+export function getHighlights(db: Database.Database, bookId: string): Highlight[] {
+  const rows = getAll<any>(db, 'SELECT * FROM highlights WHERE book_id = ? ORDER BY page, created_at', [bookId]);
+  return rows.map((r: any) => ({
+    id: r.id,
+    bookId: r.book_id,
+    page: r.page,
+    text: r.text,
+    color: r.color,
+    note: r.note,
+    createdAt: r.created_at,
+  }));
+}
+
+export function deleteHighlight(db: Database.Database, id: string): void {
+  run(db, 'DELETE FROM highlights WHERE id = ?', [id]);
 }
 
 export function saveProgress(db: Database.Database, bookId: string, page: number, totalPages: number): void {
@@ -212,6 +262,9 @@ if (process.argv[1]?.endsWith('/db.ts') || process.argv[1]?.endsWith('\\db.ts'))
 
   const recent = getRecentBooks(testDb, 10);
   console.assert(recent.length === 1, 'getRecentBooks');
+
+  deleteBook(testDb, 'b1');
+  console.assert(getAllBooks(testDb).length === 0, 'deleteBook');
 
   testDb.close();
   console.log('PASS: src/main/db.ts');

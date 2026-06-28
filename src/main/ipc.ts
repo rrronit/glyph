@@ -1,8 +1,55 @@
-import type { Book, ReadingProgress, SearchResult } from '../shared/types';
+import type { Book, ChatMessageInput, HighlightInput, ReadingProgress, SearchResult } from '../shared/types';
+import * as fs from 'fs';
 import * as db from './db';
 import * as watcher from './watcher';
 import * as metadata from './metadata';
 import * as searchService from './search';
+import { chatCompletion, resolveApiKey } from './ai';
+
+async function getCoverDir(): Promise<string> {
+  const { app } = await import('electron');
+  const path = await import('path');
+  return path.join(app.getPath('userData'), 'covers');
+}
+
+function coverNeedsGeneration(book: Book, coverDir: string): boolean {
+  const expectedPath = metadata.pageThumbnailPath(coverDir, book.id);
+  if (!book.coverPath) return true;
+  if (book.coverPath !== expectedPath) return true;
+  return !fs.existsSync(book.coverPath);
+}
+
+async function ensureBookCover(
+  dd: Awaited<ReturnType<typeof db.getDb>>,
+  book: Book,
+): Promise<Book> {
+  const coverDir = await getCoverDir();
+  if (!coverNeedsGeneration(book, coverDir)) return book;
+
+  try {
+    const coverPath = await metadata.generateCover(book.path, coverDir, book.id, book.title);
+    db.setBookCover(dd, book.id, coverPath);
+    return { ...book, coverPath };
+  } catch (err) {
+    console.warn(`Failed to generate cover for ${book.path}:`, err);
+    return book;
+  }
+}
+
+async function importBook(dd: Awaited<ReturnType<typeof db.getDb>>, filePath: string): Promise<Book | null> {
+  try {
+    const meta = await metadata.extractMetadata(filePath);
+    const book = db.upsertBook(dd, {
+      id: '', path: filePath, title: meta.title || '', author: meta.author,
+      publisher: meta.publisher, pages: meta.pages, fileSize: meta.fileSize,
+      addedAt: new Date().toISOString(), tags: [],
+    });
+    return ensureBookCover(dd, book);
+  } catch {
+    console.warn(`Skipping unreadable PDF: ${filePath}`);
+    return null;
+  }
+}
 
 export async function registerHandlers(): Promise<void> {
   const { ipcMain } = await import('electron');
@@ -13,37 +60,31 @@ export async function registerHandlers(): Promise<void> {
     const dd = await db.getDb();
     const books: Book[] = [];
     for (const filePath of pdfPaths) {
-      try {
-        const meta = await metadata.extractMetadata(filePath);
-        const book = db.upsertBook(dd, {
-          id: '', path: filePath, title: meta.title || '', author: meta.author,
-          publisher: meta.publisher, pages: meta.pages, fileSize: meta.fileSize,
-          addedAt: new Date().toISOString(), tags: [],
-        });
-        books.push(book);
-      } catch {
-        // ponytail: skip corrupted/unreadable PDFs
-        console.warn(`Skipping unreadable PDF: ${filePath}`);
-      }
+      const book = await importBook(dd, filePath);
+      if (book) books.push(book);
     }
     return books;
   });
 
   ipcMain.handle('library:getAll', async (_event) => {
     const dd = await db.getDb();
-    return db.getAllBooks(dd);
+    const books = db.getAllBooks(dd);
+    const coverDir = await getCoverDir();
+    const missing = books.filter((b) => coverNeedsGeneration(b, coverDir));
+    if (missing.length > 0) {
+      await Promise.all(missing.map((b) => ensureBookCover(dd, b)));
+      return db.getAllBooks(dd);
+    }
+    return books;
   });
 
   // ── Reader ───────────────────────────────────────────────
   ipcMain.handle('reader:open', async (_event, filePath: string): Promise<Book> => {
     try {
-      const meta = await metadata.extractMetadata(filePath);
       const dd = await db.getDb();
-      return db.upsertBook(dd, {
-        id: '', path: filePath, title: meta.title || '', author: meta.author,
-        publisher: meta.publisher, pages: meta.pages, fileSize: meta.fileSize,
-        addedAt: new Date().toISOString(), tags: [],
-      });
+      const book = await importBook(dd, filePath);
+      if (!book) throw new Error('Cannot read PDF file');
+      return book;
     } catch (err) {
       throw new Error(`Cannot open file: ${(err as Error).message}`);
     }
@@ -120,19 +161,49 @@ export async function registerHandlers(): Promise<void> {
     const dd = await db.getDb();
     const books: Book[] = [];
     for (const filePath of paths) {
-      try {
-        const meta = await metadata.extractMetadata(filePath);
-        const book = db.upsertBook(dd, {
-          id: '', path: filePath, title: meta.title || '', author: meta.author,
-          publisher: meta.publisher, pages: meta.pages, fileSize: meta.fileSize,
-          addedAt: new Date().toISOString(), tags: [],
-        });
-        books.push(book);
-      } catch {
-        console.warn(`Skipping unreadable PDF: ${filePath}`);
-      }
+      const book = await importBook(dd, filePath);
+      if (book) books.push(book);
     }
     return books;
+  });
+
+  // ── Highlights ────────────────────────────────────────
+  ipcMain.handle('highlight:add', async (_event, input: HighlightInput) => {
+    const dd = await db.getDb();
+    return db.createHighlight(dd, input.bookId, input.page, input.text, input.color, input.note);
+  });
+
+  ipcMain.handle('highlight:get', async (_event, bookId: string) => {
+    const dd = await db.getDb();
+    return db.getHighlights(dd, bookId);
+  });
+
+  ipcMain.handle('highlight:remove', async (_event, id: string) => {
+    const dd = await db.getDb();
+    db.deleteHighlight(dd, id);
+  });
+
+  // ── Library: delete book ──────────────────────────
+  ipcMain.handle('library:delete', async (_event, id: string) => {
+    const dd = await db.getDb();
+    db.deleteBook(dd, id);
+  });
+
+  // ── AI (OpenRouter) ───────────────────────────────────
+  ipcMain.handle('ai:status', async () => ({
+    hasEnvApiKey: !!process.env.OPENROUTER_API_KEY?.trim(),
+  }));
+
+  ipcMain.handle('ai:chat', async (_event, params: {
+    apiKey?: string;
+    model: string;
+    messages: ChatMessageInput[];
+  }): Promise<string> => {
+    const apiKey = resolveApiKey(params.apiKey);
+    if (!apiKey) {
+      throw new Error('Add an OpenRouter API key in AI settings (or set OPENROUTER_API_KEY).');
+    }
+    return chatCompletion(apiKey, params.model, params.messages);
   });
 
   // ── Dialog ──────────────────────────────────────────────

@@ -72,6 +72,23 @@ export interface SearchResult {
   match: string;
 }
 
+export interface HighlightInput {
+  bookId: string;
+  page: number;
+  text: string;
+  color?: string;
+  note?: string;
+}
+
+export interface ChatMessageInput {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+}
+
+export interface AIStatus {
+  hasEnvApiKey: boolean;
+}
+
 export interface GlyphAPI {
   ping: () => Promise<string>;
   scanLibrary: (dir: string) => Promise<Book[]>;
@@ -83,11 +100,17 @@ export interface GlyphAPI {
   addBookmark: (bookId: string, page: number, label?: string) => Promise<Bookmark>;
   getBookmarks: (bookId: string) => Promise<Bookmark[]>;
   removeBookmark: (id: string) => Promise<void>;
+  addHighlight: (input: HighlightInput) => Promise<Highlight>;
+  getHighlights: (bookId: string) => Promise<Highlight[]>;
+  removeHighlight: (id: string) => Promise<void>;
   saveProgress: (bookId: string, page: number, totalPages: number) => Promise<void>;
   getProgress: (bookId: string) => Promise<ReadingProgress | null>;
   getRecentBooks: () => Promise<ReadingProgress[]>;
   openFiles: () => Promise<string[]>;
   addFiles: (paths: string[]) => Promise<Book[]>;
+  deleteBook: (id: string) => Promise<void>;
+  getAIStatus: () => Promise<AIStatus>;
+  chat: (params: { apiKey?: string; model: string; messages: ChatMessageInput[] }) => Promise<string>;
 }
 
 declare global {
